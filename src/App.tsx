@@ -15,6 +15,7 @@ import { X, RefreshCw, Sparkle, Sparkles, LogIn, LogOut, Check, CheckCircle, Awa
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, isDummyConfig, signInWithGoogle, logOutFromFirebase, fetchStateFromFirestore, syncStateToFirestore } from "./lib/firebase";
 import { AnimatePresence, motion } from "motion/react";
+import { STATIC_CONFIG } from "./config";
 
 export default function App() {
   // Load state from localStorage on build initial bootstrap
@@ -414,7 +415,9 @@ export default function App() {
                           window.location.hostname.includes("github.preview");
     const localKey = localStorage.getItem("USER_GEMINI_API_KEY") || "";
     const envKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || "";
-    const resolvedKey = localKey || envKey;
+    const configKey = STATIC_CONFIG.GEMINI_API_KEY && !STATIC_CONFIG.GEMINI_API_KEY.includes("YOUR_COPIED_") ? STATIC_CONFIG.GEMINI_API_KEY.trim() : "";
+    
+    const resolvedKey = localKey || envKey || configKey;
 
     if (isGitHubPages || resolvedKey) {
       if (!resolvedKey) {
