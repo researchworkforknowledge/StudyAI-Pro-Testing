@@ -410,19 +410,55 @@ export default function App() {
 
   // Core API fetcher helper
   const handleCallAI = async (prompt: string, persona: string): Promise<string | null> => {
-    // 1. Determine if we must run direct client-side requests (e.g. on GitHub Pages)
-    const isGitHubPages = window.location.hostname.includes("github.io") || 
-                          window.location.hostname.includes("github.preview");
+    // 1. Determine if we have a Vercel proxy backend configured (e.g., when hosted on GitHub Pages)
+    const envApiUrl = (import.meta as any).env?.VITE_VERCEL_API_URL || (import.meta as any).env?.VITE_API_URL || "";
+    const configApiUrl = STATIC_CONFIG.VERCEL_API_URL ? STATIC_CONFIG.VERCEL_API_URL.trim().replace(/\/$/, "") : "";
+    const resolvedApiUrl = envApiUrl || configApiUrl;
+
     const localKey = localStorage.getItem("USER_GEMINI_API_KEY") || "";
     const envKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || "";
     const configKey = STATIC_CONFIG.GEMINI_API_KEY && !STATIC_CONFIG.GEMINI_API_KEY.includes("YOUR_COPIED_") ? STATIC_CONFIG.GEMINI_API_KEY.trim() : "";
     
     const resolvedKey = localKey || envKey || configKey;
 
-    if (isGitHubPages || resolvedKey) {
+    // 2. If a Vercel/Proxy backend is configured, and the user hasn't typed in a custom override key, use it!
+    if (resolvedApiUrl && !localKey) {
+      try {
+        const response = await fetch(`${resolvedApiUrl}/api/ai`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt,
+            persona,
+            board: state.board,
+            cls: state.cls,
+            sub: state.sub
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const message = errorData.error || "Proxy Server Error";
+          triggerToast(`Vercel Proxy Error: ${message}`);
+          return null;
+        }
+
+        const data = await response.json();
+        return data.reply;
+      } catch (err) {
+        console.error("Vercel Proxy connection failed, attempting default paths...", err);
+        // fall back to default or in-browser key
+      }
+    }
+
+    // 3. Determine if we must run direct client-side requests (e.g. on GitHub Pages without a proxy)
+    const isGitHubPages = window.location.hostname.includes("github.io") || 
+                          window.location.hostname.includes("github.preview");
+
+    if ((isGitHubPages && !resolvedApiUrl) || resolvedKey) {
       if (!resolvedKey) {
         setShowApiKeyModal(true);
-        triggerToast("Vite Static mode detected: Please register your Gemini API key under settings.");
+        triggerToast("Vite Static mode detected: Please register your Gemini API key under settings or configure a Vercel Proxy.");
         return null;
       }
 

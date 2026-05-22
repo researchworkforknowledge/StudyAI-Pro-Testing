@@ -89,6 +89,7 @@ export default function AIWorkspacePanels({ state, activeSection, onCallAI, onUp
   const [chatLoading, setChatLoading] = useState(false);
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [eli5Mode, setEli5Mode] = useState(false); // "Explain Like I'm 5" Smart toggle
+  const [isConfirmingClear, setIsConfirmingClear] = useState(false);
 
   const chatFileRef = useRef<HTMLInputElement>(null);
 
@@ -361,23 +362,43 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
                 <span className="text-[11px] font-mono font-bold text-slate-300">ELI-5 Simplification Mode</span>
               </label>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm("Do you want to clear your current progress thread and start a fresh chapter?")) {
-                    setChatLog([
-                      {
-                        role: "ai",
-                        text: "👋 Pranam! I'm your dedicated Indian syllabus Feynman Tutor. Ask me any conceptual doubt from your curriculum (e.g., 'What is law of electromagnetic induction?'). I will simplify it first, then go deep!"
-                      }
-                    ]);
-                  }
-                }}
-                className="text-[10px] text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1 rounded-full border border-rose-500/10 transition-colors font-mono cursor-pointer"
-                title="Wipe chats to start a fresh lesson topic"
-              >
-                Clear Conversation
-              </button>
+              {isConfirmingClear ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-yellow-400 font-mono animate-pulse">Are you sure?</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const expectedText = `👋 Pranam! I'm your dedicated Indian syllabus Feynman Tutor. Ask me any conceptual doubt from the subject "${state.sub}". I will simplify it first, then go deep!`;
+                      setChatLog([
+                        {
+                          role: "ai",
+                          text: expectedText
+                        }
+                      ]);
+                      setIsConfirmingClear(false);
+                    }}
+                    className="text-[10px] text-white bg-rose-600 hover:bg-rose-700 px-2 py-1 rounded-full transition-colors font-mono cursor-pointer"
+                  >
+                    Yes, Clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsConfirmingClear(false)}
+                    className="text-[10px] text-slate-300 bg-white/10 hover:bg-white/20 px-2 py-1 rounded-full transition-colors font-mono cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsConfirmingClear(true)}
+                  className="text-[10px] text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1 rounded-full border border-rose-500/10 transition-colors font-mono cursor-pointer"
+                  title="Wipe chats to start a fresh lesson topic"
+                >
+                  Clear Conversation
+                </button>
+              )}
             </div>
           </div>
 
