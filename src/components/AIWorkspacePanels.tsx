@@ -45,9 +45,9 @@ export default function AIWorkspacePanels({ state, activeSection, onCallAI, onUp
 
   // Keep state.stats.chatHistory synchronized dynamically on change
   useEffect(() => {
-    // Only synchronize if chatLog actually contains user messages or if chatHistory is already defined in the state
     const hasUserMessages = chatLog.some((m) => m.role === "user");
-    if (!hasUserMessages && !state.stats.chatHistory) {
+    // Only synchronize if chatLog actually contains user messages or if parent already has history
+    if (!hasUserMessages && (!state.stats.chatHistory || state.stats.chatHistory.length === 0)) {
       return;
     }
 
@@ -64,7 +64,7 @@ export default function AIWorkspacePanels({ state, activeSection, onCallAI, onUp
     });
   }, [chatLog, onUpdateStats, state.stats.chatHistory]);
 
-  // Sync back state.stats.chatHistory when user switches account
+  // Sync back state.stats.chatHistory only when a real non-empty history transitions (e.g. login/switch)
   useEffect(() => {
     if (state.stats.chatHistory && state.stats.chatHistory.length > 0) {
       const currentSer = JSON.stringify(chatLog);
@@ -72,19 +72,22 @@ export default function AIWorkspacePanels({ state, activeSection, onCallAI, onUp
       if (currentSer !== stateSer) {
         setChatLog(state.stats.chatHistory);
       }
-    } else {
-      const expectedText = `👋 Pranam! I'm your dedicated Indian syllabus Feynman Tutor. Ask me any conceptual doubt from the subject "${state.sub}". I will simplify it first, then go deep!`;
-      const isCorrectWelcome = chatLog.length === 1 && chatLog[0].role === "ai" && chatLog[0].text === expectedText;
-      if (!isCorrectWelcome) {
-        setChatLog([
-          {
-            role: "ai",
-            text: expectedText
-          }
-        ]);
-      }
     }
-  }, [state.stats.chatHistory, state.sub]);
+  }, [state.stats.chatHistory]);
+
+  // Dynamically update the default greeting message with the active syllabus subject
+  useEffect(() => {
+    const expectedWelcome = `👋 Pranam! I'm your dedicated Indian syllabus Feynman Tutor. Ask me any conceptual doubt from the subject "${state.sub}". I will simplify it first, then go deep!`;
+    const isDefaultWelcomeMessage = chatLog.length === 1 && chatLog[0].role === "ai";
+    if (isDefaultWelcomeMessage && chatLog[0].text !== expectedWelcome) {
+      setChatLog([
+        {
+          role: "ai",
+          text: expectedWelcome
+        }
+      ]);
+    }
+  }, [state.sub, chatLog]);
   const [userInput, setUserInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [isVoiceListening, setIsVoiceListening] = useState(false);
@@ -92,6 +95,14 @@ export default function AIWorkspacePanels({ state, activeSection, onCallAI, onUp
   const [isConfirmingClear, setIsConfirmingClear] = useState(false);
 
   const chatFileRef = useRef<HTMLInputElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto scroll chat to bottom when logs update or loading starts
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chatLog, chatLoading]);
 
   const handleChatFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -403,7 +414,7 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
           </div>
 
           {/* Dialog Log Scrollbox */}
-          <div className="flex-1 overflow-y-auto space-y-4 max-h-[360px] pr-2 scroll-smooth">
+          <div ref={chatScrollRef} className="flex-1 overflow-y-auto space-y-4 max-h-[360px] pr-2 scroll-smooth">
             {chatLog.map((msg, mIdx) => (
               <div
                 key={mIdx}
