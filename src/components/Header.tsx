@@ -1,5 +1,5 @@
 import React from "react";
-import { Sun, Moon, Volume2, VolumeX, Eye, EyeOff, LogIn, LogOut, Cloud, CloudLightning, ShieldAlert, Sparkles } from "lucide-react";
+import { Sun, Moon, Volume2, VolumeX, Eye, EyeOff, LogIn, LogOut, Cloud, CloudLightning, ShieldAlert, Sparkles, Key } from "lucide-react";
 import { AppState } from "../types";
 
 interface HeaderProps {
@@ -16,6 +16,7 @@ interface HeaderProps {
   onLogout: () => void;
   isSyncing: boolean;
   isDummyConfig: boolean;
+  onConfigureApiKey?: () => void;
 }
 
 export default function Header({
@@ -31,7 +32,8 @@ export default function Header({
   onLogin,
   onLogout,
   isSyncing,
-  isDummyConfig
+  isDummyConfig,
+  onConfigureApiKey
 }: HeaderProps) {
   const defaultBoards = [
     "CBSE",
@@ -203,6 +205,17 @@ export default function Header({
           >
             {state.theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
+
+          {/* Gemini API Key dynamic configuration */}
+          {onConfigureApiKey && (
+            <button
+              onClick={onConfigureApiKey}
+              title="Configure Client-Side Gemini API Key"
+              className="p-2.5 rounded-full bg-white/5 border border-white/10 text-white/70 hover:bg-pink-500/10 hover:border-pink-500/40 hover:text-white transition-all cursor-pointer"
+            >
+              <Key size={16} className="text-pink-400" />
+            </button>
+          )}
 
           {/* Google Sign-In Dynamic Auth and cloud synchronization widget */}
           {user ? (
