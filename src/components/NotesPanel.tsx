@@ -104,7 +104,7 @@ Make it encouraging, highly explanatory, and comprehensive! Write in a vibrant m
       }
     } catch (err) {
       console.error(err);
-      setGeneratedTopicNotes("Error generating notes. Make sure Gemini is online.");
+      setGeneratedTopicNotes("Error generating notes. Make sure StudyAI Pro API is online.");
     } finally {
       clearInterval(interval);
       setAiTopicLoading(false);

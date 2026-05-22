@@ -153,8 +153,12 @@ export async function signInWithGoogle() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
-  } catch (err) {
-    console.error("Google authentication error status: ", err);
+  } catch (err: any) {
+    if (err && (err.code === "auth/popup-closed-by-user" || err.message?.includes("popup-closed-by-user") || err.message?.includes("auth/popup-closed-by-user"))) {
+      console.warn("Google authentication warning: popup was closed by the user or blocked by the browser.");
+    } else {
+      console.error("Google authentication error status: ", err);
+    }
     throw err;
   }
 }

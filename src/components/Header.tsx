@@ -206,11 +206,11 @@ export default function Header({
             {state.theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
 
-          {/* Gemini API Key dynamic configuration */}
+          {/* StudyAI API Key dynamic configuration */}
           {onConfigureApiKey && (
             <button
               onClick={onConfigureApiKey}
-              title="Configure Client-Side Gemini API Key"
+              title="Configure StudyAI Pro Custom API Key Credentials"
               className="p-2.5 rounded-full bg-white/5 border border-white/10 text-white/70 hover:bg-pink-500/10 hover:border-pink-500/40 hover:text-white transition-all cursor-pointer"
             >
               <Key size={16} className="text-pink-400" />

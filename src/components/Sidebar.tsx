@@ -132,9 +132,11 @@ export default function Sidebar({
           </div>
           {!collapsed && (
             <div className="overflow-hidden">
-              <p className="text-xs font-bold text-white truncate">Arhan M.</p>
-              <p className="text-[10px] text-indigo-400 font-mono font-medium flex items-center gap-1">
-                <ShieldCheck size={10} /> Active Learner
+              <p className="text-xs font-bold text-white truncate flex items-center gap-1">
+                Arhan <span className="text-[8px] bg-indigo-500/30 text-indigo-300 font-mono px-1.5 py-0.5 rounded-full border border-indigo-500/40 font-bold uppercase">Owner</span>
+              </p>
+              <p className="text-[9px] text-[#0bb6ae] font-mono font-medium flex items-center gap-1">
+                <ShieldCheck size={10} /> Creator & Programmer
               </p>
             </div>
           )}

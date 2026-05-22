@@ -10,6 +10,7 @@ import HomeworkPanel from "./components/HomeworkPanel";
 import FlashcardsPanel from "./components/FlashcardsPanel";
 import AIWorkspacePanels from "./components/AIWorkspacePanels";
 import StaticReferencePanels from "./components/StaticReferencePanels";
+import LandingPage from "./components/LandingPage";
 import { AppState, INITIAL_STATE, Note, Flashcard, Homework, QuickTask } from "./types";
 import { X, RefreshCw, Sparkle, Sparkles, LogIn, LogOut, Check, CheckCircle, Award, Compass, Globe, HelpCircle, BookOpen, ShieldCheck } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -41,6 +42,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("dash");
   const [collapsed, setCollapsed] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"landing" | "app">("landing");
 
   // Auth & Cloud synchronisation states
   const [user, setUser] = useState<any>(null);
@@ -57,6 +59,122 @@ export default function App() {
   const [simName, setSimName] = useState("");
   const [simAvatar, setSimAvatar] = useState("🚀");
   const [authStep, setAuthStep] = useState(0); // 0=Form, 1=Animation Loader
+
+  // Custom high-octane retro acoustic dopamine synthesizer engineered by Arhan
+  const playDopamineSound = (sType: "success" | "levelUp" | "correct" | "wrong" | "click" | "powerUp" = "click") => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      
+      if (sType === "click") {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.11);
+      } else if (sType === "correct") {
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
+          gain.gain.setValueAtTime(0, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + idx * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.25);
+          
+          osc.start(ctx.currentTime + idx * 0.08);
+          osc.stop(ctx.currentTime + idx * 0.08 + 0.26);
+        });
+      } else if (sType === "wrong") {
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc1.type = "sawtooth";
+        osc2.type = "sawtooth";
+        osc1.frequency.setValueAtTime(180, ctx.currentTime);
+        osc2.frequency.setValueAtTime(184, ctx.currentTime);
+        
+        gain.gain.setValueAtTime(0.05, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        
+        osc1.start();
+        osc2.start();
+        osc1.stop(ctx.currentTime + 0.3);
+        osc2.stop(ctx.currentTime + 0.3);
+      } else if (sType === "levelUp") {
+        const scale = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50, 1318.51];
+        scale.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.05);
+          gain.gain.setValueAtTime(0, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + idx * 0.05 + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + idx * 0.05 + 0.4);
+          
+          osc.start(ctx.currentTime + idx * 0.05);
+          osc.stop(ctx.currentTime + idx * 0.05 + 0.45);
+        });
+      } else if (sType === "success") {
+        const notes = [880, 987.77, 1174.66, 1318.51, 1567.98];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.04);
+          gain.gain.setValueAtTime(0.05, ctx.currentTime + idx * 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.04 + 0.18);
+          
+          osc.start(ctx.currentTime + idx * 0.04);
+          osc.stop(ctx.currentTime + idx * 0.04 + 0.2);
+        });
+      } else if (sType === "powerUp") {
+        const osc = ctx.createOscillator();
+        const biquad = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        osc.connect(biquad);
+        biquad.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(220, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.45);
+        
+        biquad.type = "peaking";
+        biquad.frequency.setValueAtTime(400, ctx.currentTime);
+        biquad.Q.setValueAtTime(10, ctx.currentTime);
+        
+        gain.gain.setValueAtTime(0.01, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.45);
+        
+        osc.start();
+        osc.stop(ctx.currentTime + 0.46);
+      }
+    } catch (e) {
+      console.warn("Dopamine sound engine exception: ", e);
+    }
+  };
 
   // Load mock user and corresponding workspace state on boot (if in local mode)
   useEffect(() => {
@@ -251,6 +369,8 @@ export default function App() {
     } catch (e: any) {
       if (e.message === "PROVISION_REQUIRED") {
         triggerToast("🔐 Firebase terms in AI Studio must be accepted first!");
+      } else if (e?.code === "auth/popup-closed-by-user" || e?.message?.includes("popup-closed-by-user") || e?.message?.includes("auth/popup-closed-by-user")) {
+        triggerToast("🔑 Sign-in popup closed. Tip: allow popups or open the app in a new tab!");
       } else {
         triggerToast("Login failed. Check internet coordinates.");
       }
@@ -311,21 +431,31 @@ export default function App() {
     const audio = audioRef.current;
 
     const handleTrackEnded = () => {
-      // Automatically advance to a randomized different track in the same vibe so they never get bored!
+      // True randomizer algorithm that guarantees a completely new track is selected from the active catalog station
       setState((prev) => {
-        const currentVibe = VIBES[prev.vibe] || VIBES[0];
-        const numTracks = currentVibe.tracks.length;
-        let randomTrackIdx = prev.track;
-        if (numTracks > 1) {
-          while (randomTrackIdx === prev.track) {
-            randomTrackIdx = Math.floor(Math.random() * numTracks);
+        const activeVibe = VIBES[prev.vibe] || VIBES[0];
+        const catalogTracks = activeVibe.tracks;
+        const totalTracksCount = catalogTracks.length;
+        const currentTrackIndex = prev.track;
+        
+        let selectedNextTrackIndex = currentTrackIndex;
+        if (totalTracksCount > 1) {
+          // Keep generating until we get a completely different index to prevent repeats back-to-back
+          while (selectedNextTrackIndex === currentTrackIndex) {
+            selectedNextTrackIndex = Math.floor(Math.random() * totalTracksCount);
           }
         } else {
-          randomTrackIdx = 0;
+          selectedNextTrackIndex = 0;
         }
+
+        const nextTrackName = catalogTracks[selectedNextTrackIndex]?.t || "Lofi Ambient";
+        setTimeout(() => {
+          triggerToast(`🎵 Auto-Cycled: "${nextTrackName}" | Handcrafted Study Playlist by Arhan!`);
+        }, 80);
+
         return {
           ...prev,
-          track: randomTrackIdx,
+          track: selectedNextTrackIndex,
           lofi: true
         };
       });
@@ -833,6 +963,30 @@ Content:\n${noteContent}`;
   const activeTrackName = currentVibe.tracks[state.track % currentVibe.tracks.length]?.t || "Lo-Fi Beats";
 
   const currentThemeClass = state.theme === "light" ? "light" : "dark";
+  const studentDisplayName = user?.displayName || state.profileName || "Syllabus Gladiator";
+
+  if (viewMode === "landing") {
+    return (
+      <LandingPage
+        initialState={state}
+        onCallAI={handleCallAI}
+        onLaunchApp={(onboardingData) => {
+          if (onboardingData) {
+            setState((prev) => ({
+              ...prev,
+              board: onboardingData.board,
+              cls: onboardingData.cls,
+              sub: onboardingData.sub,
+              profileName: onboardingData.tracker || "Syllabus Gladiator"
+            }));
+          }
+          setViewMode("app");
+          triggerToast("Activated StudyAI Pro Workspace!");
+        }}
+        onPlaySound={() => playDopamineSound('levelUp')}
+      />
+    );
+  }
 
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${currentThemeClass}`}>
@@ -892,6 +1046,8 @@ Content:\n${noteContent}`;
                 onDeleteQuickTask={handleDeleteQuickTask}
                 onSetExamDate={(date) => setState((prev) => ({ ...prev, examDate: date }))}
                 onNavigate={(tab) => setActiveTab(tab)}
+                onPlaySound={playDopamineSound}
+                profileName={studentDisplayName}
               />
             )}
 
@@ -915,17 +1071,26 @@ Content:\n${noteContent}`;
                 }}
                 onNextTrack={() => {
                   setState((prev) => {
-                    const currentVibe = VIBES[prev.vibe] || VIBES[0];
-                    const numTracks = currentVibe.tracks.length;
-                    let targetTrack = prev.track;
-                    if (numTracks > 1) {
-                      while (targetTrack === prev.track) {
-                        targetTrack = Math.floor(Math.random() * numTracks);
+                    const activeVibe = VIBES[prev.vibe] || VIBES[0];
+                    const catalogTracks = activeVibe.tracks;
+                    const totalTracksCount = catalogTracks.length;
+                    const currentTrackIndex = prev.track;
+                    
+                    let selectedNextTrackIndex = currentTrackIndex;
+                    if (totalTracksCount > 1) {
+                      while (selectedNextTrackIndex === currentTrackIndex) {
+                        selectedNextTrackIndex = Math.floor(Math.random() * totalTracksCount);
                       }
                     } else {
-                      targetTrack = 0;
+                      selectedNextTrackIndex = 0;
                     }
-                    return { ...prev, track: targetTrack, lofi: true };
+
+                    const nextTrackName = catalogTracks[selectedNextTrackIndex]?.t || "Lofi Ambient";
+                    setTimeout(() => {
+                      triggerToast(`🎵 Skip: Playing "${nextTrackName}" | Curated by Arhan`);
+                    }, 80);
+
+                    return { ...prev, track: selectedNextTrackIndex, lofi: true };
                   });
                 }}
                 onPrevTrack={() => {
@@ -961,6 +1126,8 @@ Content:\n${noteContent}`;
                 onIncrementQuizzes={() =>
                   setState((prev) => ({ ...prev, stats: { ...prev.stats, quizzes: prev.stats.quizzes + 1 } }))
                 }
+                onPlaySound={playDopamineSound}
+                profileName={studentDisplayName}
               />
             )}
 
@@ -997,6 +1164,7 @@ Content:\n${noteContent}`;
                 activeSection={activeTab as any}
                 onCallAI={handleCallAI}
                 onUpdateStats={handleUpdateStats}
+                profileName={studentDisplayName}
               />
             )}
 

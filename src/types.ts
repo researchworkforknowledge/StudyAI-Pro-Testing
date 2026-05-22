@@ -61,6 +61,7 @@ export interface AppState {
   vibe: number;
   track: number;
   speechOn?: boolean;
+  profileName?: string;
 }
 
 export const INITIAL_STATE: AppState = {
@@ -95,5 +96,6 @@ export const INITIAL_STATE: AppState = {
   lofi: false,
   vibe: 0,
   track: 0,
-  speechOn: false
+  speechOn: false,
+  profileName: "Syllabus Gladiator"
 };

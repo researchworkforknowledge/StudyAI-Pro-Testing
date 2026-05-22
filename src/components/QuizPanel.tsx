@@ -4,6 +4,8 @@ import { HelpCircle, RefreshCw, Sparkles, Award, ArrowRight, CheckCircle2, XCirc
 interface QuizPanelProps {
   onCallAI: (prompt: string, persona: string) => Promise<string | null>;
   onIncrementQuizzes: () => void;
+  onPlaySound?: (soundType: 'success' | 'levelUp' | 'correct' | 'wrong' | 'click' | 'powerUp') => void;
+  profileName?: string;
 }
 
 interface Question {
@@ -13,7 +15,7 @@ interface Question {
   exp: string; // explanation
 }
 
-export default function QuizPanel({ onCallAI, onIncrementQuizzes }: QuizPanelProps) {
+export default function QuizPanel({ onCallAI, onIncrementQuizzes, onPlaySound, profileName }: QuizPanelProps) {
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([
@@ -81,6 +83,9 @@ export default function QuizPanel({ onCallAI, onIncrementQuizzes }: QuizPanelPro
     const isCorrect = optIdx === questions[activeQuestionIdx].ans;
     if (isCorrect) {
       setScore((s) => s + 1);
+      if (onPlaySound) onPlaySound('correct');
+    } else {
+      if (onPlaySound) onPlaySound('wrong');
     }
   };
 
@@ -88,9 +93,13 @@ export default function QuizPanel({ onCallAI, onIncrementQuizzes }: QuizPanelPro
     setSelectedOpt(null);
     if (activeQuestionIdx + 1 < questions.length) {
       setActiveQuestionIdx((i) => i + 1);
+      if (onPlaySound) onPlaySound('click');
     } else {
       setQuizFinished(true);
       onIncrementQuizzes();
+      if (onPlaySound) {
+        onPlaySound(score >= questions.length / 2 ? 'levelUp' : 'wrong');
+      }
     }
   };
 

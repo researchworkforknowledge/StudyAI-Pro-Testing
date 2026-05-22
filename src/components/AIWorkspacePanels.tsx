@@ -27,9 +27,10 @@ interface AIWorkspacePanelsProps {
   activeSection: "pyq" | "pred" | "doubts" | "strat" | "motiv" | "weak";
   onCallAI: (prompt: string, persona: string) => Promise<string | null>;
   onUpdateStats: (updater: (prev: AppState["stats"]) => AppState["stats"]) => void;
+  profileName?: string;
 }
 
-export default function AIWorkspacePanels({ state, activeSection, onCallAI, onUpdateStats }: AIWorkspacePanelsProps) {
+export default function AIWorkspacePanels({ state, activeSection, onCallAI, onUpdateStats, profileName }: AIWorkspacePanelsProps) {
   // --- 1. AI doubts Chat States ---
   const [chatLog, setChatLog] = useState<ChatMessage[]>(() => {
     if (state.stats.chatHistory && state.stats.chatHistory.length > 0) {
@@ -144,10 +145,10 @@ export default function AIWorkspacePanels({ state, activeSection, onCallAI, onUp
     // Build complete conversational history transcript to preserve academic discussion context
     const conversationTimeline = nextLog
       .slice(-8)
-      .map((m) => `${m.role === "user" ? "Student" : "Feynman Tutor AI"}: ${m.text}`)
+      .map((m) => `${m.role === "user" ? (profileName || "Student") : "Feynman Tutor AI"}: ${m.text}`)
       .join("\n\n");
 
-    const promptWithHistory = `You are a warm, supportive school teacher. Below is the historical dialogue of our active lesson discussion. Please evaluate the entire thread and answer the last 'Student' message with perfect reference continuity, remembering the core subject topic:
+    const promptWithHistory = `You are a warm, supportive school teacher. Below is the historical dialogue of our active lesson discussion. Please evaluate the entire thread and answer the last '${profileName || "Student"}' message with perfect reference continuity, remembering the core subject topic:
 
 ${conversationTimeline}
 
@@ -313,10 +314,10 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
     try {
       const convoPrompt = nextMsgs
         .slice(-6)
-        .map((m) => `${m.role === "user" ? "Student" : "AI Explainer"}: ${m.text}`)
+        .map((m) => `${m.role === "user" ? (profileName || "Student") : "AI Explainer"}: ${m.text}`)
         .join("\n\n");
 
-      const systemPrompt = `You are an expert exam prep mentor conversing with a student regarding this Question Paper:\n\n${pyqOutput}\n\nAnd Solutions:\n${solutionsOutput || "(Not loaded by student yet)"}\n\nProvide a hyper-simplified explanation to help them understand. Keep words warm, extremely clear, simple, and encouraging.\n\nDialogue thread:\n${convoPrompt}`;
+      const systemPrompt = `You are an expert exam prep mentor conversing with a student (${profileName || "Student"}) regarding this Question Paper:\n\n${pyqOutput}\n\nAnd Solutions:\n${solutionsOutput || "(Not loaded by student yet)"}\n\nProvide a hyper-simplified explanation to help them understand. Keep words warm, extremely clear, simple, and encouraging.\n\nDialogue thread:\n${convoPrompt}`;
 
       const reply = await onCallAI(systemPrompt, "doubts");
       if (reply) {
@@ -425,7 +426,7 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
                     msg.role === "user" ? "bg-indigo-600 text-white" : "bg-cyan-500/10 text-cyan-400"
                   }`}
                 >
-                  {msg.role === "user" ? "ME" : "AI"}
+                  {msg.role === "user" ? (profileName || "ME").slice(0, 2).toUpperCase() : "AI"}
                 </div>
                 <div
                   className={`p-3.5 rounded-2xl text-xs leading-relaxed whitespace-pre-line ${
@@ -434,6 +435,11 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
                       : "bg-white/5 border border-white/10 text-white/90 rounded-tl-none font-mono"
                   }`}
                 >
+                  {msg.role === "user" && (
+                    <div className="text-[9px] text-[#00d4cc] font-mono font-bold uppercase tracking-wider mb-1 pb-1 border-b border-white/10">
+                      👤 {profileName || "Scholar"}
+                    </div>
+                  )}
                   {msg.text}
 
                   {msg.role === "ai" && (
@@ -847,7 +853,7 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
                               msg.role === "user" ? "bg-indigo-600 text-white" : "bg-pink-500/10 text-pink-400"
                             }`}
                           >
-                            {msg.role === "user" ? "ME" : "AI"}
+                            {msg.role === "user" ? (profileName || "ME").slice(0, 2).toUpperCase() : "AI"}
                           </div>
                           <div
                             className={`p-3 rounded-2xl text-xs leading-relaxed whitespace-pre-line shadow ${
@@ -856,6 +862,11 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
                                 : "bg-white/5 border border-white/10 text-white/90 rounded-tl-none font-mono"
                             }`}
                           >
+                            {msg.role === "user" && (
+                              <div className="text-[9px] text-[#00d4cc] font-mono font-bold uppercase tracking-wider mb-1 pb-1 border-b border-white/10">
+                                👤 {profileName || "Scholar"}
+                              </div>
+                            )}
                             {msg.text}
                           </div>
                         </div>
