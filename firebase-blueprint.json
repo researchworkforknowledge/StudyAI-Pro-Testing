@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "userState": {
+      "title": "UserState",
+      "description": "Unified sync document containing user profile settings, study stats, notes deck, quick tasks, and study streaks",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique Google user UID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "board": {
+          "type": "string",
+          "description": "Standard exam syllabus board e.g. CBSE / ICSE"
+        },
+        "cls": {
+          "type": "string",
+          "description": "Selected student class"
+        },
+        "sub": {
+          "type": "string",
+          "description": "Syllabus subject focus"
+        },
+        "theme": {
+          "type": "string",
+          "description": "Color theme choice"
+        },
+        "notes": {
+          "type": "array",
+          "description": "User custom compiled notes list"
+        },
+        "hw": {
+          "type": "array",
+          "description": "User homework items and status tracker"
+        },
+        "fc": {
+          "type": "array",
+          "description": "Standard flashcards decks"
+        },
+        "qt": {
+          "type": "array",
+          "description": "Dashboard quick tasks"
+        },
+        "stats": {
+          "type": "object",
+          "description": "Aggregated stats like log hours and study streaks"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last synchronised time snapshot"
+        }
+      },
+      "required": ["userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "userState",
+      "description": "Dynamic workspace snapshot syncing notes and tracks per verified user account"
+    }
+  }
+}

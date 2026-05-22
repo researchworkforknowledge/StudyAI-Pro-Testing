@@ -1,0 +1,6 @@
+{
+  "name": "StudyAI Pro",
+  "description": "Hyper-premium AI education companion & board exam cracker platform, featuring exam simulators, voice tutors, mind maps, real-time quizzes, and analytics.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,206 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Base enhancements */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #050507;
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.01) 25%,
+    rgba(79, 70, 229, 0.08) 50%,
+    rgba(255, 255, 255, 0.01) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* Sleek Interface design panel styles and borders */
+.glass-panel {
+  background: rgba(10, 10, 15, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel:hover {
+  border-color: rgba(79, 70, 229, 0.3);
+  box-shadow: 0 12px 40px 0 rgba(79, 70, 229, 0.1);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-light:hover {
+  border-color: rgba(79, 70, 229, 0.2);
+  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* ==========================================================
+   ELEGANT LIGHT MODEL OVERRIDES (Sleek High Contrast Light UI)
+   ========================================================== */
+html.light body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html.light header {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-bottom-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+html.light aside {
+  background-color: #ffffff !important;
+  border-right-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+html.light main {
+  background-color: #f8fafc !important;
+}
+
+/* Cards & Panels */
+html.light .bg-[#12122c], 
+html.light .bg-white\/\[0\.02\], 
+html.light .bg-white\/5 {
+  background-color: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+html.light .bg-white\/\[0\.03\] {
+  background-color: rgba(15, 23, 42, 0.02) !important;
+  border-color: rgba(15, 23, 42, 0.06) !important;
+}
+
+html.light .bg-slate-900\/85 {
+  background-color: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+html.light .bg-[#0b0b23],
+html.light .bg-[#0a0a1f] {
+  background-color: #f1f5f9 !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+html.light .bg-[#050507] {
+  background-color: #f8fafc !important;
+}
+
+html.light .bg-[#101030]\/60 {
+  background-color: #f1f5f9 !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Text Overrides */
+html.light .text-white,
+html.light .text-slate-100 {
+  color: #0f172a !important;
+}
+
+html.light .text-white\/90,
+html.light .text-slate-200 {
+  color: #1e293b !important;
+}
+
+html.light .text-white\/70,
+html.light .text-slate-300 {
+  color: #334155 !important;
+}
+
+html.light .text-white\/60,
+html.light .text-slate-400 {
+  color: #475569 !important;
+}
+
+html.light .text-white\/40,
+html.light .text-slate-500 {
+  color: #64748b !important;
+}
+
+html.light .text-white\/30 {
+  color: #94a3b8 !important;
+}
+
+html.light .text-indigo-50 {
+  color: #1e1b4b !important;
+}
+
+/* Borders & Inputs */
+html.light .border-white\/10 {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+html.light .border-white\/5 {
+  border-color: rgba(15, 23, 42, 0.05) !important;
+}
+
+html.light select,
+html.light input,
+html.light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+html.light select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-indigo-600\/20 {
+  background-color: rgba(79, 70, 229, 0.08) !important;
+  border-color: rgba(79, 70, 229, 0.2) !important;
+}
+
+/* Navigation State items */
+html.light .hover\:bg-white\/5:hover {
+  background-color: rgba(15, 23, 42, 0.04) !important;
+}
+
