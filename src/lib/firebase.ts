@@ -18,7 +18,9 @@ if (!isDummyConfig) {
   try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
-    db = getFirestore(app);
+    db = (firebaseConfig as any).firestoreDatabaseId 
+      ? getFirestore(app, (firebaseConfig as any).firestoreDatabaseId) 
+      : getFirestore(app);
     googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({ prompt: "select_account" });
 

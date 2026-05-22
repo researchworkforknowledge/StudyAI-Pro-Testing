@@ -523,8 +523,8 @@ export default function StaticReferencePanels({
                   </div>
 
                   {/* Recharts responsive stage */}
-                  <div className="w-full h-72 md:h-80 flex items-center justify-center font-sans">
-                    <ResponsiveContainer width="100%" height="100%">
+                  <div className="w-full h-72 md:h-80 flex items-center justify-center font-sans min-h-[288px]">
+                    <ResponsiveContainer width="100%" height={288} minWidth={0}>
                       <RadarChart cx="50%" cy="50%" outerRadius="75%" data={subjectProficiencyData}>
                         <PolarGrid stroke="#1e1b4b" strokeWidth={1} />
                         <PolarAngleAxis 

@@ -221,8 +221,8 @@ export default function Dashboard({
             </div>
 
             {/* Recharts BarChart container */}
-            <div className="w-full h-64 select-none">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="w-full h-64 select-none min-h-[256px]">
+              <ResponsiveContainer width="100%" height={256} minWidth={0}>
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
                   <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} />
