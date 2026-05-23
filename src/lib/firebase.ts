@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, getDocFromServer } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, getDocFromServer, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import firebaseConfig from "../../firebase-applet-config.json";
 
 // Dynamic checker to verify if current configuration represents a real provisioned project
@@ -140,6 +140,45 @@ export async function fetchStateFromFirestore(userId: string): Promise<any | nul
   } catch (error) {
     handleFirestoreError(error, OperationType.GET, pathStr);
     return null;
+  }
+}
+
+/**
+ * Update the shared high-score leaderboard database document
+ */
+export async function syncUserXPToLeaderboard(userId: string, displayName: string, xp: number, avatar: string = "⚡") {
+  if (isDummyConfig || !db) return;
+  const pathStr = `leaderboard/${userId}`;
+  try {
+    const payload = {
+      userId,
+      name: displayName,
+      xp: xp,
+      avatar: avatar,
+      lastActive: new Date().toISOString()
+    };
+    await setDoc(doc(db, "leaderboard", userId), payload);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, pathStr);
+  }
+}
+
+/**
+ * Retrieve the top performers across all users in active database cloud
+ */
+export async function fetchLeaderboardFromFirestore(): Promise<any[]> {
+  if (isDummyConfig || !db) return [];
+  try {
+    const q = query(collection(db, "leaderboard"), orderBy("xp", "desc"), limit(10));
+    const querySnapshot = await getDocs(q);
+    const results: any[] = [];
+    querySnapshot.forEach((doc) => {
+      results.push(doc.data());
+    });
+    return results;
+  } catch (err) {
+    console.error("Failed fetching live leaderboard:", err);
+    return [];
   }
 }
 

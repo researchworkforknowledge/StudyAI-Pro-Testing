@@ -62,6 +62,9 @@ export interface AppState {
   track: number;
   speechOn?: boolean;
   profileName?: string;
+  claimedBoosts?: string[];
+  extraXP?: number;
+  proceduralSynth?: boolean;
 }
 
 export const INITIAL_STATE: AppState = {
@@ -97,5 +100,8 @@ export const INITIAL_STATE: AppState = {
   vibe: 0,
   track: 0,
   speechOn: false,
-  profileName: "Syllabus Gladiator"
+  profileName: "Syllabus Gladiator",
+  claimedBoosts: [],
+  extraXP: 0,
+  proceduralSynth: false
 };

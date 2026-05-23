@@ -56,12 +56,45 @@
         }
       },
       "required": ["userId"]
+    },
+    "leaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Public high-score scorecard containing user XP and current rank metadata",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique user identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Student display name"
+        },
+        "xp": {
+          "type": "integer",
+          "description": "Calculated student experience points"
+        },
+        "avatar": {
+          "type": "string",
+          "description": "Profile emoji badge or rank indicator"
+        },
+        "lastActive": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last active event"
+        }
+      },
+      "required": ["userId", "name", "xp"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "userState",
       "description": "Dynamic workspace snapshot syncing notes and tracks per verified user account"
+    },
+    "/leaderboard/{userId}": {
+      "schema": "leaderboardEntry",
+      "description": "Shared high-score student leaderboard sync mapping"
     }
   }
 }

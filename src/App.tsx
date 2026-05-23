@@ -14,9 +14,10 @@ import LandingPage from "./components/LandingPage";
 import { AppState, INITIAL_STATE, Note, Flashcard, Homework, QuickTask } from "./types";
 import { X, RefreshCw, Sparkle, Sparkles, LogIn, LogOut, Check, CheckCircle, Award, Compass, Globe, HelpCircle, BookOpen, ShieldCheck } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, isDummyConfig, signInWithGoogle, logOutFromFirebase, fetchStateFromFirestore, syncStateToFirestore } from "./lib/firebase";
+import { auth, isDummyConfig, signInWithGoogle, logOutFromFirebase, fetchStateFromFirestore, syncStateToFirestore, syncUserXPToLeaderboard, fetchLeaderboardFromFirestore } from "./lib/firebase";
 import { AnimatePresence, motion } from "motion/react";
 import { STATIC_CONFIG } from "./config";
+import { QuantumSynth } from "./lib/proceduralSynth";
 
 export default function App() {
   // Load state from localStorage on build initial bootstrap
@@ -49,6 +50,7 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [liveLeaderboard, setLiveLeaderboard] = useState<any[]>([]);
   
   // Client-Side Dev/Static Gemini config states (for GitHub Pages deployment)
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -262,6 +264,28 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // Periodically fetch shared Firestore leaderboard (every 10s when active)
+  useEffect(() => {
+    let interval: any = null;
+    const updateLeaderboard = async () => {
+      try {
+        const topUsers = await fetchLeaderboardFromFirestore();
+        if (topUsers && topUsers.length > 0) {
+          setLiveLeaderboard(topUsers);
+        }
+      } catch (err) {
+        console.error("Error updating live leaderboard:", err);
+      }
+    };
+
+    updateLeaderboard();
+
+    interval = setInterval(updateLeaderboard, 10000);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [user]);
+
   // Sync state mutations to Cloud Firestore if signed in (Debounced 1s)
   useEffect(() => {
     if (user && !authLoading) {
@@ -269,6 +293,18 @@ export default function App() {
         setIsSyncing(true);
         try {
           await syncStateToFirestore(user.uid, state);
+
+          // Calculate student current XP and synchronise live in shared cloud toppers grid
+          const finalXP = Math.floor(
+            (state.stats.hours || 0) * 100 + 
+            (state.stats.quizzes || 0) * 50 + 
+            state.notes.length * 150 + 
+            state.fc.length * 30 + 
+            state.stats.streak * 25
+          ) + 250 + (state.extraXP || 0);
+
+          const profileName = user.displayName || state.profileName || "Syllabus Gladiator";
+          await syncUserXPToLeaderboard(user.uid, profileName, finalXP);
         } catch (e) {
           console.error("Cloud syncing exception: ", e);
         } finally {
@@ -356,23 +392,31 @@ export default function App() {
 
   // Handle Dynamic login with signin options
   const handleGoogleLogin = async () => {
+    // Save original offline context before login if no active user is signed in
+    if (!user) {
+      localStorage.setItem("sap_v4_offline", JSON.stringify(state));
+    }
+    setShowAuthModal(true);
+  };
+
+  const executeRealGoogleLogin = async () => {
     if (isDummyConfig) {
-      // Save original offline context before login if no active user is signed in
-      if (!user) {
-        localStorage.setItem("sap_v4_offline", JSON.stringify(state));
-      }
-      setShowAuthModal(true);
+      triggerToast("🔐 Running in Local Storage database mode. Complete Firebase terms inside AI Studio UI first!");
       return;
     }
+    setAuthStep(1); // switch view to connection loader sequence
     try {
       await signInWithGoogle();
+      setShowAuthModal(false);
+      setAuthStep(0);
     } catch (e: any) {
-      if (e.message === "PROVISION_REQUIRED") {
-        triggerToast("🔐 Firebase terms in AI Studio must be accepted first!");
-      } else if (e?.code === "auth/popup-closed-by-user" || e?.message?.includes("popup-closed-by-user") || e?.message?.includes("auth/popup-closed-by-user")) {
-        triggerToast("🔑 Sign-in popup closed. Tip: allow popups or open the app in a new tab!");
+      setAuthStep(0);
+      if (e?.code === "auth/popup-closed-by-user" || e?.message?.includes("popup-closed-by-user")) {
+        triggerToast("🔑 Sign-in popup was closed or blocked. Tip: allow popups or use simulator!");
+      } else if (e?.code === "auth/unauthorized-domain") {
+        triggerToast("🚫 Unauthorized Domain! Add this host domain to Firebase Console Auth Authorized domains, or use Direct Tunnel below.");
       } else {
-        triggerToast("Login failed. Check internet coordinates.");
+        triggerToast(`Login failed: ${e?.message || "Verify your connection."} Try Simulated Connection below!`);
       }
     }
   };
@@ -410,6 +454,19 @@ export default function App() {
     }, 2800);
   };
 
+  const handleClaimBooster = (id: string, xpValue: number) => {
+    setState((prev) => {
+      const currentBoosts = prev.claimedBoosts || [];
+      if (currentBoosts.includes(id)) return prev;
+      return {
+        ...prev,
+        claimedBoosts: [...currentBoosts, id],
+        extraXP: (prev.extraXP || 0) + xpValue,
+      };
+    });
+    triggerToast(`⭐ Boost Triggered! Added +${xpValue} XP directly to Leaderboard!`);
+  };
+
   // Sync state changes to localStorage
   useEffect(() => {
     try {
@@ -431,6 +488,7 @@ export default function App() {
     const audio = audioRef.current;
 
     const handleTrackEnded = () => {
+      if (state.proceduralSynth) return;
       // True randomizer algorithm that guarantees a completely new track is selected from the active catalog station
       setState((prev) => {
         const activeVibe = VIBES[prev.vibe] || VIBES[0];
@@ -464,25 +522,35 @@ export default function App() {
     audio.addEventListener("ended", handleTrackEnded);
 
     try {
-      const currentVibe = VIBES[state.vibe] || VIBES[0];
-      const currentBranch = currentVibe.tracks;
-      const trackIdx = state.track % currentBranch.length;
-      const currentTrack = currentBranch[trackIdx];
-
-      // Fix: Only update source if different to prevent song resetting on play/pause or general screen state changes!
-      if (audio.src !== currentTrack.s) {
-        audio.src = currentTrack.s;
-      }
-      
-      // Auto-advance is handled by "ended" listener, so set loop to false
-      audio.loop = false;
-
-      if (state.lofi) {
-        audio.play().catch((err) => {
-          console.log("Audio play failed or blocked by autoplay permissions:", err);
-        });
-      } else {
+      if (state.proceduralSynth) {
         audio.pause();
+        if (state.lofi) {
+          QuantumSynth.start();
+        } else {
+          QuantumSynth.stop();
+        }
+      } else {
+        QuantumSynth.stop();
+        const currentVibe = VIBES[state.vibe] || VIBES[0];
+        const currentBranch = currentVibe.tracks;
+        const trackIdx = state.track % currentBranch.length;
+        const currentTrack = currentBranch[trackIdx];
+
+        // Fix: Only update source if different to prevent song resetting on play/pause or general screen state changes!
+        if (audio.src !== currentTrack.s) {
+          audio.src = currentTrack.s;
+        }
+        
+        // Auto-advance is handled by "ended" listener, so set loop to false
+        audio.loop = false;
+
+        if (state.lofi) {
+          audio.play().catch((err) => {
+            console.log("Audio play failed or blocked by autoplay permissions:", err);
+          });
+        } else {
+          audio.pause();
+        }
       }
     } catch (e) {
       console.error("Lofi player sync problem:", e);
@@ -491,7 +559,14 @@ export default function App() {
     return () => {
       audio.removeEventListener("ended", handleTrackEnded);
     };
-  }, [state.vibe, state.track, state.lofi]);
+  }, [state.vibe, state.track, state.lofi, state.proceduralSynth]);
+
+  // Clean-up synth on actual structural app unmount
+  useEffect(() => {
+    return () => {
+      QuantumSynth.stop();
+    };
+  }, []);
 
   // Pomodoro timer countdown tick effect interval
   useEffect(() => {
@@ -960,7 +1035,29 @@ Content:\n${noteContent}`;
 
   // Helper variables for Lofi streams
   const currentVibe = VIBES[state.vibe] || VIBES[0];
-  const activeTrackName = currentVibe.tracks[state.track % currentVibe.tracks.length]?.t || "Lo-Fi Beats";
+  const baseTrack = currentVibe.tracks[state.track % currentVibe.tracks.length];
+  const TRACK_MODIFIERS = [
+    "432Hz Ambient Resonance",
+    "Slowed & Deep Reverbs",
+    "Binaural Study Master",
+    "Dopamine Enhanced Mix",
+    "Midnight Espresso Cut",
+    "Sunset Horizon Remaster",
+    "Golden Aura Frequency",
+    "Alpha Brainwave Boost",
+    "Cosmic Space Acoustic",
+    "Analog Vintage Tape Mix",
+    "Deep Focus Subliminals",
+    "Ocean Breeze Re-eqed",
+    "Retro Neon Mastercut",
+    "Breathe & Relax Session",
+    "Upbeat Energy Uplift"
+  ];
+  const modIdx = (state.track * 3 + state.vibe * 7) % TRACK_MODIFIERS.length;
+  const bpm = 65 + ((state.track * 11 + state.vibe * 13) % 55);
+  const activeTrackName = baseTrack
+    ? `${baseTrack.t} (${TRACK_MODIFIERS[modIdx]}) • ${bpm} BPM`
+    : "Study Lo-Fi Beats";
 
   const currentThemeClass = state.theme === "light" ? "light" : "dark";
   const studentDisplayName = user?.displayName || state.profileName || "Syllabus Gladiator";
@@ -1048,6 +1145,8 @@ Content:\n${noteContent}`;
                 onNavigate={(tab) => setActiveTab(tab)}
                 onPlaySound={playDopamineSound}
                 profileName={studentDisplayName}
+                onClaimBooster={handleClaimBooster}
+                liveLeaderboard={liveLeaderboard}
               />
             )}
 
@@ -1104,6 +1203,21 @@ Content:\n${noteContent}`;
                 isPlayingMusic={state.lofi}
                 activeVibeName={currentVibe.name}
                 activeTrackName={activeTrackName}
+                onToggleProceduralSynth={() => {
+                  setState((prev) => {
+                    const toggled = !prev.proceduralSynth;
+                    if (toggled) {
+                      triggerToast("🌌 Activated Quantum Procedural Synth! Loading binaural fields...");
+                    } else {
+                      triggerToast("🎵 Restored standard study radio stations.");
+                    }
+                    return {
+                      ...prev,
+                      lofi: true,
+                      proceduralSynth: toggled
+                    };
+                  });
+                }}
               />
             )}
 
@@ -1250,10 +1364,37 @@ Content:\n${noteContent}`;
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {/* Option 1: Quick predesigned elite student profiles */}
+                  {/* Option 1: Live Secure Google login with firebase credentials */}
+                  <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-black border border-indigo-500/20 space-y-3 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl pointer-events-none"></div>
+                    <div>
+                      <h4 className="text-xs uppercase font-mono text-indigo-300 tracking-wider flex items-center gap-1.5 font-bold">
+                        ⚡ RECOMMENDED PRIMARY INTERFACE
+                      </h4>
+                      <h5 className="text-sm font-bold text-white mt-1">Direct Google Federated Authentication</h5>
+                      <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                        Launches a secure firebase-auth login interface. If your browser restricts popups or if the domains are not whitelisted in the console, seamlessly use Option B or C below as an expert bypass.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={executeRealGoogleLogin}
+                      className="w-full h-11 bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2.5 transition-all cursor-pointer hover:shadow-lg hover:shadow-indigo-500/10 active:scale-98 duration-150"
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" className="shrink-0">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                      </svg>
+                      Synchronize live with Google Identity
+                    </button>
+                  </div>
+
+                  {/* Option 2: Quick predesigned elite student profiles */}
                   <div className="space-y-2.5">
                     <h4 className="text-xs uppercase font-mono text-slate-400 tracking-wider flex items-center gap-1.5 font-bold">
-                      <Award size={13} className="text-amber-400" /> Option A: Instantly Switch Elite Student Accounts
+                      <Award size={13} className="text-amber-400" /> Option B: Instantly Switch Elite Student Accounts
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {PRESET_PROFILES.map((profile) => (
@@ -1280,11 +1421,11 @@ Content:\n${noteContent}`;
                   {/* Divider line */}
                   <div className="flex items-center gap-3 text-[10px] font-mono text-slate-500 uppercase tracking-widest my-2 animate-pulse">
                     <span className="flex-1 h-px bg-white/5"></span>
-                    <span>OR CONNECT CUSTOM STUDENT GOOGLE ACCOUNT</span>
+                    <span>OR CREATE CUSTOM STUDY OPERATING ID</span>
                     <span className="flex-1 h-px bg-white/5"></span>
                   </div>
 
-                  {/* Option 2: Custom details Google credentials emulator */}
+                  {/* Option C: Custom details Google credentials emulator */}
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();

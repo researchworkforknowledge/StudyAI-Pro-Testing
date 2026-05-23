@@ -36,12 +36,30 @@ service cloud.firestore {
         && (data.stats == null || data.stats is map);
     }
 
+    // Validation validation for leaderboard entries
+    function isValidLeaderboardEntry(data) {
+      return data.userId is string 
+        && data.userId.size() <= 128
+        && data.userId == request.auth.uid
+        && data.name is string 
+        && data.name.size() <= 128
+        && data.xp is int
+        && (data.avatar == null || (data.avatar is string && data.avatar.size() <= 16));
+    }
+
     // Match blocks for /users/{userId}
     match /users/{userId} {
       // Validate correct ID usage on all target modifications
       allow get: if isOwner(userId) && isValidId(userId);
       allow create: if isOwner(userId) && isValidId(userId) && isValidUserState(request.resource.data);
       allow update: if isOwner(userId) && isValidId(userId) && isValidUserState(request.resource.data);
+      allow delete: if isOwner(userId) && isValidId(userId);
+    }
+
+    // Match blocks for shared leaderboard
+    match /leaderboard/{userId} {
+      allow read: if true;
+      allow create, update: if isOwner(userId) && isValidId(userId) && isValidLeaderboardEntry(request.resource.data);
       allow delete: if isOwner(userId) && isValidId(userId);
     }
   }

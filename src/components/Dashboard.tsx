@@ -24,6 +24,8 @@ interface DashboardProps {
   onNavigate: (tab: string) => void;
   onPlaySound?: (soundType: 'success' | 'levelUp' | 'correct' | 'wrong' | 'click' | 'powerUp') => void;
   profileName?: string;
+  onClaimBooster?: (id: string, xpValue: number) => void;
+  liveLeaderboard?: any[];
 }
 
 export default function Dashboard({
@@ -34,11 +36,13 @@ export default function Dashboard({
   onSetExamDate,
   onNavigate,
   onPlaySound,
-  profileName
+  profileName,
+  onClaimBooster,
+  liveLeaderboard
 }: DashboardProps) {
   const [newtaskText, setNewtaskText] = useState("");
   const [tempExamDate, setTempExamDate] = useState(state.examDate || "");
-  const [claimedBoosts, setClaimedBoosts] = useState<string[]>([]);
+  const claimedBoosts = state.claimedBoosts || [];
 
   // Render weekly chart data from stats / sessions state
   const daysOfTheWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -83,20 +87,29 @@ export default function Dashboard({
     state.notes.length * 150 + 
     state.fc.length * 30 + 
     state.stats.streak * 25
-  ) + 250; 
+  ) + 250 + (state.extraXP || 0); 
   
   const currentLevel = Math.floor(computedXP / 500) + 1;
   const xpInCurrentLevel = computedXP % 500;
   const levelProgressPercent = Math.min(100, Math.max(5, Math.floor((xpInCurrentLevel / 500) * 100)));
 
-  // Mock student topper list
-  const leaderBoardUsers = [
-    { name: "Dr. Ritika Sen (NEET UG)", xp: 3450, avatar: "🧬", active: false },
-    { name: "Aarav Sharma (IIT-JEE)", xp: 2100, avatar: "🧠", active: false },
-    { name: `${profileName || "You"} (Syllabus Gladiator)`, xp: computedXP, avatar: "⚡", active: true },
-    { name: "Priya Deshmukh (UPSC)", xp: 1800, avatar: "🏛️", active: false },
-    { name: "Anirudh Das (CAT Quant)", xp: 1200, avatar: "📈", active: false }
-  ].sort((a, b) => b.xp - a.xp);
+  // Peer student topper leaderboard state (Live Firestore + offline fallback)
+  const leaderBoardUsers = (liveLeaderboard && liveLeaderboard.length > 0)
+    ? [...liveLeaderboard]
+        .map((item) => ({
+          name: item.name,
+          xp: item.xp,
+          avatar: item.avatar || "⚡",
+          active: item.name === (profileName || "Syllabus Gladiator")
+        }))
+        .sort((a, b) => b.xp - a.xp)
+    : [
+        { name: "Dr. Ritika Sen (NEET UG)", xp: 3450, avatar: "🧬", active: false },
+        { name: "Aarav Sharma (IIT-JEE)", xp: 2100, avatar: "🧠", active: false },
+        { name: `${profileName || "You"} (Syllabus Gladiator)`, xp: computedXP, avatar: "⚡", active: true },
+        { name: "Priya Deshmukh (UPSC)", xp: 1800, avatar: "🏛️", active: false },
+        { name: "Anirudh Das (CAT Quant)", xp: 1200, avatar: "📈", active: false }
+      ].sort((a, b) => b.xp - a.xp);
 
   // Topper achievements list
   const BADGES = [
@@ -416,7 +429,10 @@ export default function Dashboard({
                     key={item.id}
                     disabled={claimed}
                     onClick={() => {
-                      setClaimedBoosts((prev) => [...prev, item.id]);
+                      const xpVal = item.id === "api" ? 250 : item.id === "scribe" ? 150 : 100;
+                      if (onClaimBooster) {
+                        onClaimBooster(item.id, xpVal);
+                      }
                       if (onPlaySound) {
                         onPlaySound(item.sType as any);
                       }
