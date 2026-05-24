@@ -1099,10 +1099,10 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
             return (
               <div 
                 key={idx} 
-                className={`border rounded-xl overflow-hidden transition-all duration-300 group shadow-lg ${
+                className={`border rounded-2xl overflow-hidden transition-all duration-300 group shadow-lg ${
                   isOpen 
-                    ? "bg-gradient-to-r from-[#0d0c1b] via-[#090913] to-[#06060c] border-[#00f0e6]/40 shadow-[0_0_25px_rgba(0,240,230,0.15)] scale-[1.01]" 
-                    : "bg-gradient-to-r from-white/[0.03] to-transparent border-white/10 hover:border-[#0bb6ae]/35 hover:bg-[#0c0c16]/60"
+                    ? "bg-gradient-to-b from-[#0e0c24] via-[#080814] to-[#04040a] border-[#00f0e6]/50 shadow-[0_12px_40px_rgba(0,240,230,0.12)] scale-[1.01]" 
+                    : "bg-gradient-to-r from-white/[0.03] to-transparent border-white/10 hover:border-[#0bb6ae]/45 hover:bg-[#0c0c16]/70"
                 }`}
               >
                 <button 
@@ -1116,31 +1116,29 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
                       });
                     }
                   }}
-                  className="w-full p-5 flex items-center justify-between text-left cursor-pointer focus:outline-none"
+                  className="w-full p-6 flex items-center justify-between text-left cursor-pointer focus:outline-none select-none"
                 >
-                  <span className={`text-xs md:text-sm font-bold font-sans transition-colors duration-300 ${isOpen ? "text-[#00f0e6] font-extrabold" : "text-slate-100 group-hover:text-[#00f0e6]"}`}>
+                  <span className={`text-[13px] md:text-sm font-bold font-sans transition-colors duration-300 ${isOpen ? "text-[#00f0e6] font-extrabold" : "text-white group-hover:text-[#00f0e6]"}`}>
                     {faq.q}
                   </span>
-                  <span className={`text-base font-bold font-mono ml-4 transition-all duration-300 ${isOpen ? "text-[#00f0e6] rotate-90 scale-125" : "text-slate-400 group-hover:text-[#0bb6ae]"}`}>
+                  <span className={`text-base font-extrabold font-mono ml-4 transition-all duration-300 flex items-center justify-center w-7 h-7 rounded-full ${isOpen ? "text-[#00f0e6] bg-[#00f0e6]/10 rotate-90 scale-110" : "text-slate-400 bg-white/5 group-hover:text-[#0bb6ae] group-hover:bg-[#0bb6ae]/10"}`}>
                     {isOpen ? "−" : "＋"}
                   </span>
                 </button>
-                <AnimatePresence>
-                  {isOpen && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: "easeInOut" }}
-                      className="overflow-hidden border-t border-white/10 bg-black/40"
-                    >
-                      <div className="p-6 text-xs sm:text-[13px] text-slate-100 font-medium leading-relaxed font-sans relative pl-8">
-                        <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[#00f0e6] to-indigo-500 rounded-l" />
-                        {faq.a}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <div 
+                  className={`grid transition-all duration-300 ease-in-out ${
+                    isOpen 
+                      ? "grid-rows-[1fr] opacity-100 border-t border-white/10 bg-[#050510]/80" 
+                      : "grid-rows-[0fr] opacity-0 bg-transparent pointer-events-none"
+                  }`}
+                >
+                  <div className="overflow-hidden">
+                    <div className="p-6 text-xs sm:text-[13.5px] text-slate-100 font-semibold leading-relaxed font-sans relative pl-8 select-text">
+                      <span className="absolute left-0 top-0 bottom-0 w-[4px] bg-gradient-to-b from-[#00f0e6] to-indigo-500 rounded-l" />
+                      {faq.a}
+                    </div>
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -1460,78 +1458,369 @@ function SpaceParticlesCanvas() {
     let animationFrameId: number;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
     
     const handleResize = () => {
       if (!canvas) return;
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
     };
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", handleResize, { passive: true });
     
-    // Low footprint star model
+    // Core mouse position interpolation
+    const mouse = { 
+      x: width / 2, 
+      y: height / 2, 
+      targetX: width / 2, 
+      targetY: height / 2, 
+      isHovering: false,
+      pressure: 0
+    };
+    
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      mouse.targetX = e.clientX;
+      mouse.targetY = e.clientY;
+      mouse.isHovering = true;
+    };
+    
+    // Shockwave ripple pool on clicks
+    interface Shockwave {
+      x: number;
+      y: number;
+      radius: number;
+      maxRadius: number;
+      alpha: number;
+      speed: number;
+    }
+    const shockwaves: Shockwave[] = [];
+    const handleGlobalMouseDown = (e: MouseEvent) => {
+      shockwaves.push({
+        x: e.clientX,
+        y: e.clientY,
+        radius: 0,
+        maxRadius: isMobile ? 120 : 260,
+        alpha: 0.5,
+        speed: 4.5
+      });
+      mouse.pressure = 1.0;
+    };
+
+    const handleGlobalMouseUp = () => {
+      mouse.pressure = 0.0;
+    };
+    
+    window.addEventListener("mousemove", handleGlobalMouseMove, { passive: true });
+    window.addEventListener("mousedown", handleGlobalMouseDown, { passive: true });
+    window.addEventListener("mouseup", handleGlobalMouseUp, { passive: true });
+    
+    // Low footprint star model with multi-depth physical layers
     class Star {
       x: number;
       y: number;
       size: number;
+      baseSize: number;
       vx: number;
       vy: number;
       alpha: number;
+      baseAlpha: number;
       fadeSpeed: number;
       color: string;
+      depthPlane: number; // 1 = Deep, 2 = Medium, 3 = Foreground Interactive
+      offsetX: number = 0;
+      offsetY: number = 0;
       
       constructor() {
+        const r = Math.random();
+        if (r < 0.55 || isMobile) {
+          // Plane 1 - Deep Background (tiny, slow, static)
+          this.depthPlane = 1;
+          this.size = Math.random() * 0.6 + 0.3;
+          this.vx = (Math.random() - 0.5) * 0.03;
+          this.vy = -(Math.random() * 0.04 + 0.01);
+          this.baseAlpha = Math.random() * 0.22 + 0.08;
+          this.color = "rgba(147, 197, 253, 0.35)"; // soft blue
+        } else if (r < 0.85) {
+          // Plane 2 - Midground
+          this.depthPlane = 2;
+          this.size = Math.random() * 0.9 + 0.6;
+          this.vx = (Math.random() - 0.5) * 0.12;
+          this.vy = -(Math.random() * 0.12 + 0.03);
+          this.baseAlpha = Math.random() * 0.4 + 0.15;
+          this.color = Math.random() > 0.5 ? "rgba(124, 107, 239, 0.45)" : "rgba(244, 114, 182, 0.35)"; // indigo/pink
+        } else {
+          // Plane 3 - Foreground Interactive (responds aggressively, glows)
+          this.depthPlane = 3;
+          this.size = Math.random() * 1.5 + 1.2;
+          this.vx = (Math.random() - 0.5) * 0.2;
+          this.vy = -(Math.random() * 0.18 + 0.06);
+          this.baseAlpha = Math.random() * 0.6 + 0.25;
+          this.color = Math.random() > 0.45 ? "rgba(0, 240, 230, 0.7)" : "rgba(255, 255, 255, 0.8)"; // neon cyan/pure white
+        }
+        
+        this.baseSize = this.size;
+        this.alpha = this.baseAlpha;
+        this.fadeSpeed = Math.random() * 0.004 + 0.001;
         this.x = Math.random() * width;
         this.y = Math.random() * height;
-        this.size = Math.random() * 1.6 + 0.4;
-        this.vx = (Math.random() - 0.5) * 0.18;
-        this.vy = -(Math.random() * 0.22 + 0.05); // slow float upward velocity
-        this.alpha = Math.random() * 0.4 + 0.1;
-        this.fadeSpeed = Math.random() * 0.003 + 0.001;
-        
-        const colors = ["#7c6bef", "#0bb6ae", "#f472b6", "#e0e7ff"];
-        this.color = colors[Math.floor(Math.random() * colors.length)];
       }
       
       update() {
         this.x += this.vx;
         this.y += this.vy;
         
-        // Boundaries looping safe check
-        if (this.x < 0) this.x = width;
-        if (this.x > width) this.x = 0;
-        if (this.y < 0) this.y = height;
+        // Gentle spring-damped physics offset recovery
+        this.offsetX += (0 - this.offsetX) * 0.08;
+        this.offsetY += (0 - this.offsetY) * 0.08;
         
-        // Sinusoidal light pulsing
+        // Responsive cursor physical repulsion
+        if (mouse.isHovering && !isMobile) {
+          const dx = (this.x + this.offsetX) - mouse.x;
+          const dy = (this.y + this.offsetY) - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const repelRadius = this.depthPlane === 3 ? 240 : 120;
+          
+          if (dist < repelRadius && dist > 2) {
+            const force = (repelRadius - dist) / repelRadius;
+            const pushMagnitude = this.depthPlane === 3 ? 24 : 8;
+            this.offsetX += (dx / dist) * force * pushMagnitude - this.offsetX * 0.15;
+            this.offsetY += (dy / dist) * force * pushMagnitude - this.offsetY * 0.15;
+          }
+        }
+        
+        // Dynamic Loop Bounds check
+        if (this.x < -10) this.x = width + 10;
+        if (this.x > width + 10) this.x = -10;
+        if (this.y < -10) {
+          this.y = height + 10;
+          this.x = Math.random() * width;
+        }
+        
+        // Organic star shimmer pulsation
         this.alpha += this.fadeSpeed;
-        if (this.alpha > 0.65 || this.alpha < 0.08) {
+        if (this.alpha > this.baseAlpha + 0.22 || this.alpha < this.baseAlpha - 0.22 || this.alpha > 0.95 || this.alpha < 0.04) {
           this.fadeSpeed = -this.fadeSpeed;
         }
       }
       
       draw(c: CanvasRenderingContext2D) {
         c.save();
-        c.globalAlpha = Math.max(0, Math.min(1, this.alpha));
-        // Add dynamic light bloom
-        c.shadowBlur = 6;
-        c.shadowColor = this.color;
+        const renderX = this.x + this.offsetX;
+        const renderY = this.y + this.offsetY;
+        
+        c.globalAlpha = Math.max(0.02, Math.min(1, this.alpha));
+        if (this.depthPlane === 3 && !isMobile) {
+          c.shadowBlur = 8;
+          c.shadowColor = this.color;
+        }
+        
         c.beginPath();
-        c.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        c.arc(renderX, renderY, this.size, 0, Math.PI * 2);
         c.fillStyle = this.color;
         c.fill();
         c.restore();
       }
     }
     
-    // 38 particles balances visual depth with zero processor overhead
-    const count = 38;
+    // Scale particle count perfectly for pristine mobile frame performance
+    const count = isMobile ? 22 : 55;
     const starsList: Star[] = Array.from({ length: count }).map(() => new Star());
     
+    // Core Background Nebulas
+    interface Nebula {
+      x: number;
+      y: number;
+      targetX: number;
+      targetY: number;
+      radius: number;
+      baseRadius: number;
+      color: string;
+      speed: number;
+      angle: number;
+    }
+    
+    const nebulas: Nebula[] = [
+      {
+        x: width * 0.25,
+        y: height * 0.25,
+        targetX: width * 0.25,
+        targetY: height * 0.25,
+        radius: isMobile ? 280 : 500,
+        baseRadius: isMobile ? 280 : 500,
+        color: "rgba(74, 16, 138, 0.15)", // Midnight Violet
+        speed: 0.16,
+        angle: 0
+      },
+      {
+        x: width * 0.75,
+        y: height * 0.35,
+        targetX: width * 0.75,
+        targetY: height * 0.35,
+        radius: isMobile ? 320 : 600,
+        baseRadius: isMobile ? 320 : 600,
+        color: "rgba(13, 27, 74, 0.18)", // Electric Cobalt
+        speed: 0.1,
+        angle: Math.PI / 3
+      },
+      {
+        x: width * 0.5,
+        y: height * 0.75,
+        targetX: width * 0.5,
+        targetY: height * 0.75,
+        radius: isMobile ? 360 : 700,
+        baseRadius: isMobile ? 360 : 700,
+        color: "rgba(10, 10, 32, 0.25)", // Deep Indigo
+        speed: 0.06,
+        angle: Math.PI / 1.5
+      },
+      {
+        x: width * 0.8,
+        y: height * 0.2,
+        targetX: width * 0.8,
+        targetY: height * 0.2,
+        radius: isMobile ? 220 : 400,
+        baseRadius: isMobile ? 220 : 400,
+        color: "rgba(3, 37, 42, 0.13)", // Muted Cyan
+        speed: 0.2,
+        angle: Math.PI * 1.8
+      }
+    ];
+
+    let time = 0;
+    
     const render = () => {
-      ctx.clearRect(0, 0, width, height);
+      time++;
+      // Clear with dark baseplate
+      ctx.fillStyle = "#030307";
+      ctx.fillRect(0, 0, width, height);
       
+      // Interpolate mouse coordinates (Spring tracking)
+      mouse.x += (mouse.targetX - mouse.x) * 0.05;
+      mouse.y += (mouse.targetY - mouse.y) * 0.05;
+      
+      // 1. Draw Drifting Ambient Nebulas
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (let i = 0; i < nebulas.length; i++) {
+        const n = nebulas[i];
+        n.angle += 0.0006 * n.speed;
+        n.x = n.targetX + Math.cos(n.angle) * 110;
+        n.y = n.targetY + Math.sin(n.angle) * 75;
+        n.radius = n.baseRadius + Math.sin(time * 0.0005 + i) * 35;
+        
+        const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.radius);
+        grad.addColorStop(0, n.color);
+        grad.addColorStop(0.4, n.color.replace("0.1", "0.04").replace("0.2", "0.08"));
+        grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+      
+      // 2. Draw Soft Cursor-Follower Radiant Spotlight Aura
+      if (mouse.isHovering && !isMobile) {
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        const auraRadius = 450 + mouse.pressure * 80;
+        const spotlight = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, auraRadius);
+        
+        spotlight.addColorStop(0, "rgba(0, 240, 230, 0.065)"); // Soft Cyan
+        spotlight.addColorStop(0.35, "rgba(124, 107, 239, 0.04)"); // Soft Indigo
+        spotlight.addColorStop(1, "rgba(0, 0, 0, 0)");
+        
+        ctx.fillStyle = spotlight;
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, auraRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      
+      // 3. Draw Cybernetic Neural Network Connections in Plane 3
+      if (!isMobile) {
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        for (let i = 0; i < starsList.length; i++) {
+          const sA = starsList[i];
+          if (sA.depthPlane !== 3) continue;
+          
+          const sAX = sA.x + sA.offsetX;
+          const sAY = sA.y + sA.offsetY;
+          
+          // Draw linking network lines from cursor
+          if (mouse.isHovering) {
+            const mDX = sAX - mouse.x;
+            const mDY = sAY - mouse.y;
+            const mDist = Math.sqrt(mDX * mDX + mDY * mDY);
+            const cursorNetworkRadius = 260;
+            
+            if (mDist < cursorNetworkRadius) {
+              const alpha = (1 - mDist / cursorNetworkRadius) * 0.16;
+              ctx.strokeStyle = `rgba(0, 240, 230, ${alpha})`;
+              ctx.lineWidth = 0.6;
+              ctx.beginPath();
+              ctx.moveTo(mouse.x, mouse.y);
+              ctx.lineTo(sAX, sAY);
+              ctx.stroke();
+            }
+          }
+          
+          // Draw connecting links between stars in close proximity
+          for (let j = i + 1; j < starsList.length; j++) {
+            const sB = starsList[j];
+            if (sB.depthPlane !== 3) continue;
+            
+            const sBX = sB.x + sB.offsetX;
+            const sBY = sB.y + sB.offsetY;
+            
+            const dX = sAX - sBX;
+            const dY = sAY - sBY;
+            const dSquare = dX * dX + dY * dY;
+            const connectionThreshold = 180;
+            
+            if (dSquare < connectionThreshold * connectionThreshold) {
+              const dist = Math.sqrt(dSquare);
+              const alpha = (1 - dist / connectionThreshold) * 0.08 * sA.alpha;
+              ctx.strokeStyle = `rgba(124, 107, 239, ${alpha})`;
+              ctx.lineWidth = 0.55;
+              ctx.beginPath();
+              ctx.moveTo(sAX, sAY);
+              ctx.lineTo(sBX, sBY);
+              ctx.stroke();
+            }
+          }
+        }
+        ctx.restore();
+      }
+      
+      // 4. Update and Draw Stars
       for (const s of starsList) {
         s.update();
         s.draw(ctx);
+      }
+      
+      // 5. Update and Draw Click Shockwave Ripples
+      if (shockwaves.length > 0) {
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        for (let i = shockwaves.length - 1; i >= 0; i--) {
+          const w = shockwaves[i];
+          w.radius += w.speed;
+          w.alpha = (1 - w.radius / w.maxRadius) * 0.5;
+          ctx.strokeStyle = `rgba(0, 240, 230, ${w.alpha})`;
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = "rgba(0, 240, 230, 0.6)";
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.arc(w.x, w.y, w.radius, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          if (w.radius >= w.maxRadius) {
+            shockwaves.splice(i, 1);
+          }
+        }
+        ctx.restore();
       }
       
       animationFrameId = requestAnimationFrame(render);
@@ -1541,6 +1830,9 @@ function SpaceParticlesCanvas() {
     
     return () => {
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("mousemove", handleGlobalMouseMove);
+      window.removeEventListener("mousedown", handleGlobalMouseDown);
+      window.removeEventListener("mouseup", handleGlobalMouseUp);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
@@ -1549,7 +1841,7 @@ function SpaceParticlesCanvas() {
     <canvas 
       ref={canvasRef} 
       className="absolute inset-0 w-full h-full pointer-events-none z-[1]" 
-      style={{ mixBlendMode: "screen", opacity: 0.8 }}
+      style={{ mixBlendMode: "screen", opacity: 0.95 }}
     />
   );
 }

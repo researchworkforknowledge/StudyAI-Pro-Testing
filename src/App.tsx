@@ -12,6 +12,7 @@ import AIWorkspacePanels from "./components/AIWorkspacePanels";
 import StaticReferencePanels from "./components/StaticReferencePanels";
 import LandingPage from "./components/LandingPage";
 import CustomCursor from "./components/CustomCursor";
+import WorkspaceAtmosphere from "./components/WorkspaceAtmosphere";
 import { AppState, INITIAL_STATE, Note, Flashcard, Homework, QuickTask } from "./types";
 import { X, RefreshCw, Sparkle, Sparkles, LogIn, LogOut, Check, CheckCircle, Award, Compass, Globe, HelpCircle, BookOpen, ShieldCheck } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -1125,7 +1126,8 @@ Content:\n${noteContent}`;
   return (
     <>
       <CustomCursor />
-      <div className={`min-h-screen flex flex-col transition-colors duration-300 ${currentThemeClass}`}>
+      <div className={`min-h-screen flex flex-col transition-colors duration-300 relative overflow-x-hidden ${currentThemeClass}`}>
+        <WorkspaceAtmosphere theme={state.theme} />
       {/* Toast popup */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 p-4 rounded-xl shadow-2xl glass-panel bg-indigo-950/90 border border-[#0bb6ae]/30 text-white flex items-center gap-2 animate-[bounce_1.4s_infinite_alternate_relative]">
