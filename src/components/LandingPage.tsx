@@ -30,6 +30,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import InteractiveText from "./InteractiveText";
 import CinematicBeamCanvas from "./CinematicBeamCanvas";
+import { trackPageView, trackEvent } from "../lib/analytics";
 
 interface LandingPageProps {
   onLaunchApp: (onboardingData?: { board: string; cls: string; sub: string; tracker?: string }) => void;
@@ -87,16 +88,39 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
     return () => clearInterval(interval);
   }, []);
 
+  // GA4 Page View tracking on landing mount
+  useEffect(() => {
+    trackPageView("/", "StudyAI Pro - Landing Page");
+    trackEvent("view_landing_page", {
+      platform: "Web",
+      host_name: window.location.hostname
+    });
+  }, []);
+
   const handleDemoTrial = async () => {
     if (!demoPrompt.trim()) return;
     setDemoLoading(true);
     setDemoResult(null);
     onPlaySound();
+    
+    // Log demo API sandbox event
+    trackEvent("trial_demo_prompt", {
+      prompt_length: demoPrompt.length,
+      selected_persona: demoPersona
+    });
+
     try {
       const response = await onCallAI(demoPrompt, demoPersona);
       setDemoResult(response);
+      trackEvent("trial_demo_success", {
+        selected_persona: demoPersona
+      });
     } catch (err) {
       setDemoResult("Verification failed. Please check connection.");
+      trackEvent("trial_demo_error", {
+        selected_persona: demoPersona,
+        error_message: String(err)
+      });
     } finally {
       setDemoLoading(false);
     }
@@ -104,6 +128,15 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
 
   const handleFinishOnboarding = () => {
     onPlaySound();
+    
+    // Log successful app launcher onboarding config
+    trackEvent("launch_app_onboarding", {
+      selected_board: selectedBoard,
+      selected_class: selectedClass,
+      selected_subject: selectedSubject,
+      name_supplied: Boolean(userName)
+    });
+
     onLaunchApp({
       board: selectedBoard,
       cls: selectedClass,
@@ -1075,7 +1108,13 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
                 <button 
                   onClick={() => {
                     onPlaySound();
-                    setActiveFaq(isOpen ? null : idx);
+                    const nextOpenState = !isOpen;
+                    setActiveFaq(nextOpenState ? idx : null);
+                    if (nextOpenState) {
+                      trackEvent("faq_expanded", {
+                        faq_question: faq.q
+                      });
+                    }
                   }}
                   className="w-full p-5 flex items-center justify-between text-left cursor-pointer focus:outline-none"
                 >

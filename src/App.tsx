@@ -19,6 +19,7 @@ import { auth, isDummyConfig, signInWithGoogle, logOutFromFirebase, fetchStateFr
 import { AnimatePresence, motion } from "motion/react";
 import { STATIC_CONFIG } from "./config";
 import { QuantumSynth } from "./lib/proceduralSynth";
+import { trackPageView, trackEvent } from "./lib/analytics";
 
 export default function App() {
   // Load state from localStorage on build initial bootstrap
@@ -222,6 +223,35 @@ export default function App() {
       root.classList.remove("light");
     }
   }, [state.theme, viewMode]);
+
+  // Analytics tracking for viewMode and activeTab switches
+  useEffect(() => {
+    if (viewMode === "landing") {
+      trackPageView("/", "StudyAI Pro - Landing Page");
+    } else {
+      const pagePath = `/workspace/${activeTab}`;
+      const pageTitles: Record<string, string> = {
+        dash: "StudyAI Pro - Workspace Dashboard",
+        timer: "StudyAI Pro - Pomodoro Focus Desk",
+        notes: "StudyAI Pro - AI Note Studio",
+        mindmap: "StudyAI Pro - Cognitive Mind Maps",
+        quiz: "StudyAI Pro - Mock Simulator Exams",
+        homework: "StudyAI Pro - Active Recall Study Arena",
+        flashcards: "StudyAI Pro - Spaced Repetition Cards",
+        copilot: "StudyAI Pro - Copilot AI Expert Chat"
+      };
+      
+      const title = pageTitles[activeTab] || `StudyAI Pro - Workspace - ${activeTab}`;
+      trackPageView(pagePath, title);
+      trackEvent("switch_workspace_tab", {
+        tab_key: activeTab,
+        tab_page_title: title,
+        board: state.board,
+        class: state.class,
+        subject: state.subject
+      });
+    }
+  }, [viewMode, activeTab, state.board, state.class, state.subject]);
 
   // Auth observer and initial cloud state pulling
   useEffect(() => {
