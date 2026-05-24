@@ -97,7 +97,7 @@ export default function Header({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-md border-b transition-colors duration-300 bg-[#050507]/90 border-white/10 px-4 md:px-8 py-3 flex items-center justify-between gap-4 h-20">
+    <header className="sticky top-0 z-40 w-full backdrop-blur-xl border-b transition-colors duration-300 bg-black/40 border-white/5 px-4 md:px-8 py-3 flex items-center justify-between gap-4 h-20">
       {/* Brand Logo & V2 badges */}
       <div className="flex items-center gap-2 md:gap-3">
         <div className="relative group cursor-pointer flex items-center gap-3">

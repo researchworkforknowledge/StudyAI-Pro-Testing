@@ -164,7 +164,7 @@ export default function Dashboard({
 
       {/* Analytical grid cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white/[0.02] border border-white/5 hover:border-indigo-500/40 rounded-2xl p-5 flex items-center gap-4 transition-all">
+        <div className="bg-gradient-to-b from-white/[0.04] to-transparent backdrop-blur-xl border border-white/5 hover:border-indigo-500/35 hover:bg-white/[0.06] rounded-2xl p-5 flex items-center gap-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(79,70,229,0.06)]">
           <div className="p-3 rounded-xl bg-indigo-500/15 text-indigo-400 shadow-[0_0_15px_rgba(79,70,229,0.15)]">
             <Clock size={20} />
           </div>
@@ -176,7 +176,7 @@ export default function Dashboard({
           </div>
         </div>
 
-        <div className="bg-white/[0.02] border border-white/5 hover:border-indigo-500/40 rounded-2xl p-5 flex items-center gap-4 transition-all">
+        <div className="bg-gradient-to-b from-white/[0.04] to-transparent backdrop-blur-xl border border-white/5 hover:border-indigo-500/35 hover:bg-white/[0.06] rounded-2xl p-5 flex items-center gap-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(168,85,247,0.06)]">
           <div className="p-3 rounded-xl bg-purple-500/15 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.15)]">
             <Trophy size={20} />
           </div>
@@ -186,7 +186,7 @@ export default function Dashboard({
           </div>
         </div>
 
-        <div className="bg-white/[0.02] border border-white/5 hover:border-indigo-500/40 rounded-2xl p-5 flex items-center gap-4 transition-all">
+        <div className="bg-gradient-to-b from-white/[0.04] to-transparent backdrop-blur-xl border border-white/5 hover:border-indigo-500/35 hover:bg-white/[0.06] rounded-2xl p-5 flex items-center gap-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(236,72,153,0.06)]">
           <div className="p-3 rounded-xl bg-pink-500/15 text-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.15)]">
             <BookMarked size={20} />
           </div>
@@ -196,7 +196,7 @@ export default function Dashboard({
           </div>
         </div>
 
-        <div className="bg-white/[0.02] border border-white/5 hover:border-indigo-500/40 rounded-2xl p-5 flex items-center gap-4 transition-all">
+        <div className="bg-gradient-to-b from-white/[0.04] to-transparent backdrop-blur-xl border border-white/5 hover:border-indigo-500/35 hover:bg-white/[0.06] rounded-2xl p-5 flex items-center gap-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(11,182,174,0.06)]">
           <div className="p-3 rounded-xl bg-[#0bb6ae]/15 text-[#0bb6ae] shadow-[0_0_15px_rgba(11,182,174,0.15)]">
             <Flame size={20} />
           </div>
