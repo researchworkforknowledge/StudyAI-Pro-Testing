@@ -11,6 +11,7 @@ import FlashcardsPanel from "./components/FlashcardsPanel";
 import AIWorkspacePanels from "./components/AIWorkspacePanels";
 import StaticReferencePanels from "./components/StaticReferencePanels";
 import LandingPage from "./components/LandingPage";
+import CustomCursor from "./components/CustomCursor";
 import { AppState, INITIAL_STATE, Note, Flashcard, Homework, QuickTask } from "./types";
 import { X, RefreshCw, Sparkle, Sparkles, LogIn, LogOut, Check, CheckCircle, Award, Compass, Globe, HelpCircle, BookOpen, ShieldCheck } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -210,14 +211,17 @@ export default function App() {
   // Synchronise Theme switches to Document Class list for immediate light mode response
   useEffect(() => {
     const root = document.documentElement;
-    if (state.theme === "light") {
+    if (viewMode === "landing") {
+      root.classList.add("dark");
+      root.classList.remove("light");
+    } else if (state.theme === "light") {
       root.classList.add("light");
       root.classList.remove("dark");
     } else {
       root.classList.add("dark");
       root.classList.remove("light");
     }
-  }, [state.theme]);
+  }, [state.theme, viewMode]);
 
   // Auth observer and initial cloud state pulling
   useEffect(() => {
@@ -1064,29 +1068,34 @@ Content:\n${noteContent}`;
 
   if (viewMode === "landing") {
     return (
-      <LandingPage
-        initialState={state}
-        onCallAI={handleCallAI}
-        onLaunchApp={(onboardingData) => {
-          if (onboardingData) {
-            setState((prev) => ({
-              ...prev,
-              board: onboardingData.board,
-              cls: onboardingData.cls,
-              sub: onboardingData.sub,
-              profileName: onboardingData.tracker || "Syllabus Gladiator"
-            }));
-          }
-          setViewMode("app");
-          triggerToast("Activated StudyAI Pro Workspace!");
-        }}
-        onPlaySound={() => playDopamineSound('levelUp')}
-      />
+      <>
+        <CustomCursor />
+        <LandingPage
+          initialState={state}
+          onCallAI={handleCallAI}
+          onLaunchApp={(onboardingData) => {
+            if (onboardingData) {
+              setState((prev) => ({
+                ...prev,
+                board: onboardingData.board,
+                cls: onboardingData.cls,
+                sub: onboardingData.sub,
+                profileName: onboardingData.tracker || "Syllabus Gladiator"
+              }));
+            }
+            setViewMode("app");
+            triggerToast("Activated StudyAI Pro Workspace!");
+          }}
+          onPlaySound={() => playDopamineSound('levelUp')}
+        />
+      </>
     );
   }
 
   return (
-    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${currentThemeClass}`}>
+    <>
+      <CustomCursor />
+      <div className={`min-h-screen flex flex-col transition-colors duration-300 ${currentThemeClass}`}>
       {/* Toast popup */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 p-4 rounded-xl shadow-2xl glass-panel bg-indigo-950/90 border border-[#0bb6ae]/30 text-white flex items-center gap-2 animate-[bounce_1.4s_infinite_alternate_relative]">
@@ -1136,7 +1145,41 @@ Content:\n${noteContent}`;
         <main className={`flex-1 p-4 md:p-8 transition-all duration-300 ${collapsed ? "ml-[64px]" : "ml-[256px]"}`}>
           <div className="max-w-5xl mx-auto pb-12">
             {activeTab === "dash" && (
-              <Dashboard
+              <>
+                <motion.div
+                  initial={{ opacity: 0, y: -30, filter: "blur(12px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  transition={{ duration: 2.8, ease: [0.16, 1, 0.3, 1] }}
+                  onMouseMove={(e) => {
+                    const target = e.currentTarget;
+                    const rect = target.getBoundingClientRect();
+                    const x = (e.clientX - rect.left) / rect.width - 0.5;
+                    const y = (e.clientY - rect.top) / rect.height - 0.5;
+                    target.style.transition = "transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)";
+                    target.style.transform = `perspective(1000px) rotateY(${x * 4.5}deg) rotateX(${-y * 11}deg) translate3d(0, -2px, 8px)`;
+                  }}
+                  onMouseLeave={(e) => {
+                    const target = e.currentTarget;
+                    target.style.transition = "transform 1s cubic-bezier(0.16, 1, 0.3, 1)";
+                    target.style.transform = "perspective(1000px) rotateY(0deg) rotateX(0deg) translate3d(0, 0, 0)";
+                  }}
+                  className="mb-8 p-4 rounded-2xl bg-[#07070a]/95 border border-[#0bb6ae]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden select-none will-change-transform shadow-[0_16px_45px_rgba(11,182,174,0.08)]"
+                >
+                  <div className="absolute top-0 left-0 h-[2px] bg-gradient-to-r from-[#7c6bef] via-[#0bb6ae] to-pink-500 w-full animate-pulse"></div>
+                  <div className="flex items-center gap-3">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0bb6ae] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-400"></span>
+                    </span>
+                    <p className="text-[10px] font-mono text-slate-300 leading-relaxed uppercase tracking-wider">
+                      🌌 NEURO-SENSE SYLLABUS SYNCED // TRACING BOARD: <span className="text-[#0bb6ae] font-bold">{state.board}</span> // STANDARD: <span className="text-white font-bold">{state.cls}</span> // ACTIVE SUBJECT: <span className="text-pink-400 font-extrabold">{state.sub}</span>
+                    </p>
+                  </div>
+                  <span className="text-[9px] font-mono text-[#0bb6ae] font-bold px-2.5 py-0.5 rounded-full bg-[#0bb6ae]/10 border border-[#0bb6ae]/20 uppercase tracking-widest self-start sm:self-auto">
+                    ACTIVE Scribe-Core API
+                  </span>
+                </motion.div>
+                <Dashboard
                 state={state}
                 onAddQuickTask={handleAddQuickTask}
                 onToggleQuickTask={handleToggleQuickTask}
@@ -1148,6 +1191,7 @@ Content:\n${noteContent}`;
                 onClaimBooster={handleClaimBooster}
                 liveLeaderboard={liveLeaderboard}
               />
+              </>
             )}
 
             {activeTab === "timer" && (
@@ -1596,5 +1640,6 @@ Content:\n${noteContent}`;
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 }
