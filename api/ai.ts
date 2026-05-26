@@ -1,4 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+export const maxDuration = 60; // Max timeout for Vercel Hobby plan
+export const dynamic = 'force-dynamic';
 
 export default async function handler(req: any, res: any) {
   // 1. Inject CORS headers so your GitHub Pages site is allowed to fetch successfully
@@ -141,10 +147,10 @@ Generate 3 to 6 high-vibe flashcards tailored to CBSE/ICSE grades. Ensure proper
       `\n\n[Context - Board: ${board || 'CBSE'}, Class: ${cls || '10'}, Subject: ${sub || 'Mathematics'}]`;
 
     // Retrieve active environment secret
-    const geminiKey = process.env.GEMINI_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
     if (!geminiKey) {
       return res.status(500).json({
-        error: "GEMINI_API_KEY is not configured in Vercel. Please add it to your Vercel project environment variables first."
+        error: "GEMINI_API_KEY is not configured. Please add it to your environment variables first."
       });
     }
 
@@ -169,7 +175,7 @@ Generate 3 to 6 high-vibe flashcards tailored to CBSE/ICSE grades. Ensure proper
     }
 
     const genResponse = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config,
     });

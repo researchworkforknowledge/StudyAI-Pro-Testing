@@ -22,7 +22,22 @@ import { STATIC_CONFIG } from "./config";
 import { QuantumSynth } from "./lib/proceduralSynth";
 import { trackPageView, trackEvent } from "./lib/analytics";
 
-export default function App() {
+// Lazy-loaded, shared global module reference for retro acoustic dopamine synthesizer
+let globalDopamineAudioCtx: AudioContext | null = null;
+const getSharedDopamineAudioCtx = (): AudioContext | null => {
+  try {
+    const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtxClass) return null;
+    if (!globalDopamineAudioCtx) {
+      globalDopamineAudioCtx = new AudioCtxClass();
+    }
+    return globalDopamineAudioCtx;
+  } catch (e) {
+    return null;
+  }
+};
+
+function App() {
   // Load state from localStorage on build initial bootstrap
   const [state, setState] = useState<AppState>(() => {
     try {
@@ -54,10 +69,6 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [liveLeaderboard, setLiveLeaderboard] = useState<any[]>([]);
-  
-  // Client-Side Dev/Static Gemini config states (for GitHub Pages deployment)
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState(() => localStorage.getItem("USER_GEMINI_API_KEY") || "");
 
   // Local Google sign-in simulator portal variables
   const [simEmail, setSimEmail] = useState("");
@@ -68,9 +79,13 @@ export default function App() {
   // Custom high-octane retro acoustic dopamine synthesizer engineered by Honourable Master Arhan
   const playDopamineSound = (sType: "success" | "levelUp" | "correct" | "wrong" | "click" | "powerUp" = "click") => {
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
+      const ctx = getSharedDopamineAudioCtx();
+      if (!ctx) return;
+
+      // Resume context if browser autoplay policy or long-standing inactive tab suspended it
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
       
       if (sType === "click") {
         const osc = ctx.createOscillator();
@@ -580,8 +595,10 @@ export default function App() {
         audio.loop = false;
 
         if (state.lofi) {
-          audio.play().catch((err) => {
-            console.log("Audio play failed or blocked by autoplay permissions:", err);
+          audio.play().catch((err: any) => {
+            if (err && err.name !== "NotAllowedError") {
+              console.log("Audio play failed or blocked by autoplay permissions:", err);
+            }
           });
         } else {
           audio.pause();
@@ -650,216 +667,6 @@ export default function App() {
 
   // Core API fetcher helper
   const handleCallAI = async (prompt: string, persona: string): Promise<string | null> => {
-    // 1. Determine if we have a Vercel proxy backend configured (e.g., when hosted on GitHub Pages)
-    const envApiUrl = (import.meta as any).env?.VITE_VERCEL_API_URL || (import.meta as any).env?.VITE_API_URL || "";
-    const configApiUrl = STATIC_CONFIG.VERCEL_API_URL ? STATIC_CONFIG.VERCEL_API_URL.trim().replace(/\/$/, "") : "";
-    const resolvedApiUrl = envApiUrl || configApiUrl;
-
-    const localKey = localStorage.getItem("USER_GEMINI_API_KEY") || "";
-    const envKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || "";
-    const configKey = STATIC_CONFIG.GEMINI_API_KEY && !STATIC_CONFIG.GEMINI_API_KEY.includes("YOUR_COPIED_") ? STATIC_CONFIG.GEMINI_API_KEY.trim() : "";
-    
-    const resolvedKey = localKey || envKey || configKey;
-
-    // 2. If a Vercel/Proxy backend is configured, and the user hasn't typed in a custom override key, use it!
-    if (resolvedApiUrl && !localKey) {
-      try {
-        const response = await fetch(`${resolvedApiUrl}/api/ai`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt,
-            persona,
-            board: state.board,
-            cls: state.cls,
-            sub: state.sub
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          const message = errorData.error || "Proxy Server Error";
-          triggerToast(`Vercel Proxy Error: ${message}`);
-          return null;
-        }
-
-        const data = await response.json();
-        return data.reply;
-      } catch (err) {
-        console.error("Vercel Proxy connection failed, attempting default paths...", err);
-        // fall back to default or in-browser key
-      }
-    }
-
-    // 3. Determine if we must run direct client-side requests (e.g. on GitHub Pages without a proxy)
-    const isGitHubPages = window.location.hostname.includes("github.io") || 
-                          window.location.hostname.includes("github.preview");
-
-    if ((isGitHubPages && !resolvedApiUrl) || resolvedKey) {
-      if (!resolvedKey) {
-        setShowApiKeyModal(true);
-        triggerToast("Vite Static mode detected: Please register your Gemini API key under settings or configure a Vercel Proxy.");
-        return null;
-      }
-
-      try {
-        const systemMessages: { [key: string]: string } = {
-          notes: `You are the Master Scribe — create structured study notes for Indian board exams.
-Transform any input into beautifully structured notes:
-## [Topic Title]
-**Key Concepts:** (bullet points)
-**Important Definitions:** (key terms explained simply)
-**Formulas/Dates/Facts:** (highlighted)
-**Memory Tricks:** (mnemonics)
-**Key Terms Summary:** (3-6 must-know terms with one-line definitions)
-**Exam Tips:** (what examiners look for)
-Concise but complete for board exam preparation.`,
-
-          pyq: `You are a senior Board Examiner creating authentic exam papers for Indian board exams.
-Generate questions with proper mark allocation:
-**1-mark questions:** MCQs and very short answers (3-4 questions)
-**2-mark questions:** Short answer (2 questions)
-**3-mark questions:** Application-based (2 questions)
-**5-mark questions:** Long answer or case study (1-2 questions)
-Match the exact style, language and difficulty of official board papers from the requested year.
-Start with a header containing board, class, subject, and year.`,
-
-          pred: `You are an Exam Oracle analyzing Indian board exam patterns.
-For the given board/class/subject, predict:
-1. **Top 5 Most Likely Topics** with probability %
-2. **3 High-Probability CBQs** (with model answers)
-3. **Chapter Priority Ranking** (most to least important)
-4. **Common Pitfalls** (what students get wrong)
-Be specific, data-driven, and genuinely helpful for last-minute prep.`,
-
-          doubts: `You are a brilliant teacher using the Feynman Technique. For every question, structure your answer as:
-**💡 Simple Explanation** (explain like the student is 12, no jargon)
-**📚 Academic Answer** (proper terminology and detail for board exams)
-**🌐 Real-World Analogy** (a relatable everyday example)
-**⚠️ Common Mistake** (what students usually get wrong)
-**🔑 Memory Trick** (a quick way to remember for exams)
-Focus on CBSE/ICSE Class 9-12 curriculum. Be warm, clear, encouraging and board-exam focused.`,
-
-          weak: `You are a Study Recovery Coach. Create a targeted 3-day recovery plan for weak topics.
-Format exactly as:
-**📅 DAY 1 — Foundation (2-3 hrs)**
-- Hour 1: [specific activity]
-- Hour 2: [specific activity]
-**📅 DAY 2 — Practice (2-3 hrs)**
-- Hour 1: [specific activity]
-- Hour 2: [specific activity]
-**📅 DAY 3 — Mastery + Mock (2-3 hrs)**
-- Hour 1: [specific activity]
-- Hour 2: [specific activity]
-- Quick self-test checklist
-Include: NCERT chapters, specific YouTube searches, practice question types. Be realistic and motivating.`,
-
-          mm: `Return ONLY valid JSON (no markdown, no extra text, no markdown code block backticks) for a mind map:
-{
-  "center": "Topic Name",
-  "branches": [
-    {
-      "label": "Branch label",
-      "color": "#7c6bef",
-      "children": ["sub-topic 1", "sub-topic 2"]
-    }
-  ]
-}
-Use 4-6 branches each with 2-4 children. Short labels (2-4 words).`,
-
-          quiz: `Return ONLY a valid JSON array (no markdown, no explanation, no markdown code block backticks):
-[
-  {
-    "q": "Question text?",
-    "opts": ["A option", "B option", "C option", "D option"],
-    "ans": 0,
-    "exp": "Why Option A is correct"
-  }
-]
-Generate exactly 5 multiple choice questions. The 'ans' must be 0-indexed integer (0 for A, 1 for B, 2 for C, 3 for D). Make them Indian board-exam style (CBSE/ICSE Class 10/12) with good distractors.`,
-
-          strat: `You are a Study Strategy Architect for Indian board exam students. Provide:
-🗓️ **Weekly Timetable** (subject-wise daily plan)
-📊 **Topic Priority Matrix** (high/medium/low priority)
-✍ **Answer Writing Tips** (score maximum marks)
-🧠 **Memory Techniques** (spaced repetition, mind maps)
-🚨 **Exam Day Tips** (dos and don'ts)
-Be practical, specific to the board/class, results-focused.`,
-
-          motiv: `You are an inspiring personal coach for an Indian board exam student. Give a warm, genuine, uplifting, personalized promotional motivational message (150-200 words) that:
-- Acknowledges the hard work
-- Addresses common exam anxiety
-- Uses a powerful analogy or metaphor
-- Ends with a strong actionable affirmation
-- Is warm, real, never preachy.`,
-
-          yoga: `You are an expert ancient Indian Yogi and wellness consultant. Generate a tailored set of Yoga Asanas (poses) to practice during study breaks based on the user's focus need (stress relief, concentration, posture correction, or eye rejuvenation).
-Your response must start with a serene greeting and then provide 2 to 3 tailored asanas. Each asana must include:
-- **Asana Sanskrit & English Name** (e.g., Tadasana - Mountain Pose)
-- **Breaks Benefit** (how it counters long sitting / studying strain)
-- **Step-by-Step Instructions** (in clear numbered lists with easy guidance)
-- **Breathing Guidance** (inhale/exhale instructions during pose)
-- **Mistakes to Avoid** (safety guard)
-Format in clean, highly elegant markdown layout with spacious divisions. Do NOT use fake or simulated data, guide the user genuinely for step-by-step clarity.`,
-
-          fc_gen: `Return ONLY a valid JSON array of objects representing flashcards for the selected study topic (no markdown, no conversation, no markdown code block backticks):
-[
-  {
-    "f": "Front / Question text?",
-    "b": "Back / Clear explanatory answer"
-  }
-]
-Generate 3 to 6 high-vibe flashcards tailored to CBSE/ICSE grades. Ensure proper key structure and robust concept clarification.`
-        };
-
-        const systemPrompt = (systemMessages[persona] || systemMessages.doubts) +
-          `\n\n[Context - Board: ${state.board || 'CBSE'}, Class: ${state.cls || '10'}, Subject: ${state.sub || 'Mathematics'}]`;
-
-        const isJson = ["mm", "quiz", "fc_gen"].includes(persona);
-        
-        const payload = {
-          contents: [
-            {
-              parts: [{ text: prompt }]
-            }
-          ],
-          systemInstruction: {
-            parts: [{ text: systemPrompt }]
-          },
-          generationConfig: {
-            temperature: 0.7,
-            ...(isJson ? { responseMimeType: "application/json" } : {})
-          }
-        };
-
-        // Standard direct call to Google Gemini model endpoints in browser
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${resolvedKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          }
-        );
-
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          const msg = errData.error?.message || "Standard Gemini call returned error.";
-          triggerToast(`Gemini direct: ${msg}`);
-          return null;
-        }
-
-        const data = await response.json();
-        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        return reply || "No response received.";
-      } catch (err: any) {
-        console.error(err);
-        triggerToast("Vite static direct request failed. Please check your network or key.");
-        return null;
-      }
-    }
-
-    // Default connection path try back-end
     try {
       const response = await fetch("/api/ai", {
         method: "POST",
@@ -875,20 +682,17 @@ Generate 3 to 6 high-vibe flashcards tailored to CBSE/ICSE grades. Ensure proper
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const message = errorData.error || "Server offline";
+        const message = errorData.error || "AI helper is momentarily reclaiming energy. Please try in a few seconds.";
         
-        // Auto surface config screen trigger
-        setShowApiKeyModal(true);
-        triggerToast(`${message}. Swapped to client-side direct config mode.`);
+        triggerToast(message);
         return null;
       }
 
       const data = await response.json();
       return data.reply;
     } catch (err) {
-      console.warn("Express backend offline, attempting direct static Gemini fallback...");
-      setShowApiKeyModal(true);
-      triggerToast("Express backend offline. Enabled Client-side Gemini configuration.");
+      console.warn("AI connection failed, offline state retry prompted:", err);
+      triggerToast("AI educator is currently busy. Please retry in a moment!");
       return null;
     }
   };
@@ -1156,7 +960,6 @@ Content:\n${noteContent}`;
         onLogout={handleLogout}
         isSyncing={isSyncing}
         isDummyConfig={isDummyConfig}
-        onConfigureApiKey={() => setShowApiKeyModal(true)}
       />
 
       {/* Main split routing layouts */}
@@ -1585,93 +1388,9 @@ Content:\n${noteContent}`;
           </div>
         )}
       </AnimatePresence>
-
-      {/* Client-Side Gemini API Key Config Modal for Static Pages Deployment */}
-      <AnimatePresence>
-        {showApiKeyModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#030308]/85 backdrop-blur-md">
-            <motion.div
-              initial={{ scale: 0.94, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.94, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="relative w-full max-w-md rounded-3xl p-6 md:p-8 bg-[#090916] border border-pink-500/20 shadow-2xl text-white overflow-hidden"
-            >
-              <div className="absolute -top-12 -right-12 w-48 h-48 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
-              <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <span className="text-[10px] uppercase font-mono bg-pink-500/10 border border-pink-500/20 text-pink-300 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 font-bold w-fit">
-                    ⚡ STATIC RECOVERY ENGINE
-                  </span>
-                  <h3 className="text-xl font-black mt-2 font-display">
-                    Local Gemini API Key
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    When hosted statically (e.g. on GitHub Pages), direct browser connections enable all AI features securely.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowApiKeyModal(false)}
-                  className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div className="text-xs bg-indigo-950/40 p-3.5 rounded-2xl border border-indigo-500/15 space-y-1.5 leading-relaxed text-slate-300">
-                  <p className="font-bold text-white">How to activate:</p>
-                  <ol className="list-decimal pl-4 space-y-1">
-                    <li>Go to <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" className="text-pink-400 hover:underline inline-flex items-center gap-0.5">Google AI Studio <Sparkles size={10} /></a></li>
-                    <li>Generate a **Free Gemini API key** with 1 click</li>
-                    <li>Paste your key below (it is stored safely in your own browser's local secure storage)</li>
-                  </ol>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-mono font-bold text-slate-300 uppercase tracking-widest block">Gemini API Key</label>
-                  <input
-                    type="password"
-                    value={apiKeyInput}
-                    onChange={(e) => setApiKeyInput(e.target.value)}
-                    placeholder="AIzaSy..."
-                    className="w-full bg-[#030308] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-pink-500/40 focus:ring-1 focus:ring-pink-500/30 transition-all font-mono"
-                  />
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button
-                    onClick={() => {
-                      localStorage.setItem("USER_GEMINI_API_KEY", apiKeyInput.trim());
-                      setShowApiKeyModal(false);
-                      triggerToast("Gemini key configured successfully!");
-                    }}
-                    className="flex-1 py-2.5 bg-gradient-to-r from-pink-500 to-indigo-650 hover:from-pink-600 hover:to-indigo-700 text-white font-black text-xs rounded-full cursor-pointer transition-all active:scale-95 text-center shadow-lg shadow-pink-500/10"
-                  >
-                    Save API Key Settings
-                  </button>
-                  {localStorage.getItem("USER_GEMINI_API_KEY") && (
-                    <button
-                      onClick={() => {
-                        localStorage.removeItem("USER_GEMINI_API_KEY");
-                        setApiKeyInput("");
-                        setShowApiKeyModal(false);
-                        triggerToast("Key removed. Falling back to platform environment.");
-                      }}
-                      className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-red-400 font-bold text-xs rounded-full border border-red-500/20 cursor-pointer transition-all active:scale-95"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
     </>
   );
 }
+
+export default App;

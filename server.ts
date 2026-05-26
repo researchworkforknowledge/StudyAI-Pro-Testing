@@ -2,6 +2,10 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import dotenv from "dotenv";
+
+// Load local environment configurations safely
+dotenv.config();
 
 async function startServer() {
   const app = express();
@@ -138,10 +142,11 @@ Generate 3 to 6 high-vibe flashcards tailored to CBSE/ICSE grades. Ensure proper
         `\n\n[Context - Board: ${board || 'CBSE'}, Class: ${cls || '10'}, Subject: ${sub || 'Mathematics'}]`;
 
       // 1. Try Gemini API first (Preferred system rule)
-      if (process.env.GEMINI_API_KEY) {
+      const geminiApiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+      if (geminiApiKey) {
         console.log("Using professional Gemini API for AI request context.");
         const ai = new GoogleGenAI({
-          apiKey: process.env.GEMINI_API_KEY,
+          apiKey: geminiApiKey,
           httpOptions: {
             headers: {
               'User-Agent': 'aistudio-build',
@@ -160,7 +165,7 @@ Generate 3 to 6 high-vibe flashcards tailored to CBSE/ICSE grades. Ensure proper
         }
 
         const genResponse = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
+          model: "gemini-2.5-flash",
           contents: prompt,
           config,
         });
