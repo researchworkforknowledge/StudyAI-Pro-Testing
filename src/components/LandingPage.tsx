@@ -56,14 +56,29 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
   // High-fidelity cursor parallax tracking coordinate states
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   useEffect(() => {
+    let frameId: number;
+    let pendingX = 0;
+    let pendingY = 0;
+    let needsUpdate = false;
+
     const handleMouseMove = (e: MouseEvent) => {
       // Coordinates normalized from -0.5 to 0.5 for fluid spatial drift
-      const x = (e.clientX / window.innerWidth) - 0.5;
-      const y = (e.clientY / window.innerHeight) - 0.5;
-      setMousePos({ x, y });
+      pendingX = (e.clientX / window.innerWidth) - 0.5;
+      pendingY = (e.clientY / window.innerHeight) - 0.5;
+
+      if (!needsUpdate) {
+        needsUpdate = true;
+        frameId = requestAnimationFrame(() => {
+          setMousePos({ x: pendingX, y: pendingY });
+          needsUpdate = false;
+        });
+      }
     };
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      cancelAnimationFrame(frameId);
+    };
   }, []);
   
   // Onboarding Selection State

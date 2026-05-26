@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Circle Radial Glow -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#0e0e30" stop-opacity="1" />
+      <stop offset="70%" stop-color="#060614" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#030308" stop-opacity="1" />
+    </radialGradient>
+
+    <!-- Chrome Cyan to Indigo Gradient for S -->
+    <linearGradient id="chromeBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="30%" stop-color="#00f0e6" />
+      <stop offset="70%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+
+    <!-- Metallic Gold Gradient for A and Arrow -->
+    <linearGradient id="goldGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d97706" />
+      <stop offset="30%" stop-color="#f59e0b" />
+      <stop offset="70%" stop-color="#fbbf24" />
+      <stop offset="90%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+
+    <!-- Crown Premium Jewel Gradients -->
+    <radialGradient id="sapphireGrad" cx="50%" cy="50%" r="40%">
+      <stop offset="0%" stop-color="#67e8f9" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </radialGradient>
+    <radialGradient id="rubyGrad" cx="50%" cy="50%" r="40%">
+      <stop offset="0%" stop-color="#fda4af" />
+      <stop offset="100%" stop-color="#e11d48" />
+    </radialGradient>
+
+    <!-- Multi-color Premium Neon Ring -->
+    <linearGradient id="neonRing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f0e6" />
+      <stop offset="35%" stop-color="#ec4899" />
+      <stop offset="70%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+
+    <!-- Drop Shadows -->
+    <filter id="royalGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="neonShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Glow & Base Background Frame -->
+  <circle cx="256" cy="256" r="236" fill="url(#bgGlow)" stroke="#1e1b4b" stroke-width="4" />
+  
+  <!-- Outer Cosmic Tech Ring with Dashes -->
+  <circle cx="256" cy="256" r="222" fill="none" stroke="url(#neonRing)" stroke-width="3" stroke-dasharray="12 8 4 8" opacity="0.6" />
+
+  <!-- Main Multi-color Glowing Neon Orbital -->
+  <circle cx="256" cy="256" r="195" fill="none" stroke="url(#neonRing)" stroke-width="6" filter="url(#neonShadow)" />
+
+  <!-- BACKGROUND DECORATIONS (Brain & Rocket Tech Symbols) -->
+  <!-- Micro Star Sparkles -->
+  <path d="M120 180 L123 186 L129 189 L123 192 L120 198 L117 192 L111 189 L117 186 Z M390 320 L392 324 L396 326 L392 328 L390 332 L388 328 L384 326 L388 324 Z" fill="#00f0e6" opacity="0.8" />
+  <path d="M150 350 L152 355 L157 357 L152 359 L150 364 L148 359 L143 357 L148 355 Z M360 140 L361 143 L364 144 L361 145 L360 148 L359 145 L356 144 L359 143 Z" fill="#fbbf24" opacity="0.8" />
+
+  <!-- THE ROYAL CROWN Floating Above (Master Arhan's Signature) -->
+  <g transform="translate(142, 45) scale(1.15)" filter="url(#royalGlow)">
+    <!-- Crown base shadow/backing -->
+    <path d="M22 65 L42 35 L75 52 L100 22 L125 52 L158 35 L178 65 Z" fill="#1e1502" opacity="0.4" />
+    
+    <!-- Crown Plate -->
+    <path d="M22 65 L42 32 L75 52 L100 18 L125 52 L158 32 L178 65" fill="none" stroke="url(#goldGrad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M22 65 L42 32 L75 52 L100 18 L125 52 L158 32 L178 65 Z" fill="url(#goldGrad)" />
+    
+    <!-- Beveled base band -->
+    <rect x="18" y="65" width="164" height="14" rx="4" fill="url(#goldGrad)" stroke="#78350f" stroke-width="1.5" />
+    <rect x="25" y="68" width="150" height="8" rx="2" fill="#78350f" opacity="0.3" />
+
+    <!-- Jewels on the Crown Peaks -->
+    <circle cx="42" cy="32" r="7.5" fill="url(#sapphireGrad)" stroke="#fbbf24" stroke-width="2" />
+    <circle cx="100" cy="18" r="9.5" fill="url(#rubyGrad)" stroke="#fbbf24" stroke-width="2.5" />
+    <circle cx="158" cy="32" r="7.5" fill="url(#sapphireGrad)" stroke="#fbbf24" stroke-width="2" />
+
+    <!-- Delicate jewels on base band -->
+    <circle cx="40" cy="72" r="3.5" fill="url(#rubyGrad)" />
+    <circle cx="70" cy="72" r="3.5" fill="url(#sapphireGrad)" />
+    <circle cx="100" cy="72" r="4.5" fill="url(#rubyGrad)" />
+    <circle cx="130" cy="72" r="3.5" fill="url(#sapphireGrad)" />
+    <circle cx="160" cy="72" r="3.5" fill="url(#rubyGrad)" />
+  </g>
+
+  <!-- THE INTERTWINED \"SA\" CHROME & GOLD OPERATING SYMBOL -->
+  <!-- The Gold Arrow Letter 'A' (Represents Dynamic Growth & Limitless Mastery) -->
+  <g filter="url(#royalGlow)">
+    <!-- Glow Backing -->
+    <path d="M245 420 L285 420 L350 250 L380 250 L415 170 L345 200 L320 250 L275 250 Z" fill="#78350f" opacity="0.2" />
+    
+    <!-- Outer line of 'A' that swept up into a beautiful Rocket Arrow -->
+    <path d="M190 415 L245 280 L290 280 M245 280 L290 170 L310 215" fill="none" stroke="url(#goldGrad)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Massive Sweeping Dynamic Upward Arrow Path -->
+    <!-- Base of the right leg soaring upward -->
+    <path d="M305 415 L350 295 L405 175 L415 152 M415 152 L345 182 M415 152 L392 222" fill="none" stroke="url(#goldGrad)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Filled bevels inside the main Arrow -->
+    <path d="M305 415 L415 152 L345 182 Z" fill="url(#goldGrad)" opacity="0.9" />
+    <path d="M415 152 L392 222 L305 415 Z" fill="url(#goldGrad)" opacity="0.8" />
+  </g>
+
+  <!-- The metallic "S" overlapping elements (Represents System Stability / Syllabus Simulators) -->
+  <g filter="url(#royalGlow)">
+    <!-- Backing/shadow of S -->
+    <path d="M140 370 C135 300 240 310 250 260 C260 210 180 180 160 230" fill="none" stroke="#060614" stroke-width="42" stroke-linecap="round" opacity="0.5" />
+    
+    <!-- Glorious S Shape -->
+    <!-- Gradient line forming S -->
+    <path d="M145 365 C155 425 240 405 250 365 C265 310 175 310 195 245 C210 195 285 195 295 248" fill="none" stroke="url(#chromeBlue)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Core highlights of S for ultra 3D glass effect -->
+    <path d="M152 360 C160 410 235 395 244 365 C255 315 185 315 202 250 C213 210 275 210 284 248" fill="none" stroke="#e0f2fe" stroke-width="8" stroke-linecap="round" opacity="0.3" />
+  </g>
+
+  <!-- Horizontal bar of the 'A' intertwining behind S and linking to future -->
+  <path d="M210 320 L310 320" fill="none" stroke="url(#goldGrad)" stroke-width="24" stroke-linecap="round" opacity="0.95" />
+  <path d="M220 320 L300 320" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity="0.4" />
+
+  <!-- DYNAMIC DOPAMINE STICKER / SEALS (Growth & Topper Badges) -->
+  <!-- Glowing Crown-top Sparkle -->
+  <path d="M256 5 L260 18 L273 22 L260 26 L256 39 L252 26 L239 22 L252 18 Z" fill="#00f0e6" opacity="0.9" filter="url(#royalGlow)" />
+  
+  <!-- "100%" or "PRO" Mnemonic branding elements on bottom -->
+  <g transform="translate(196, 395)">
+    <rect x="0" y="0" width="120" height="26" rx="13" fill="#04040a" stroke="url(#neonRing)" stroke-width="2" />
+    <text x="60" y="17" fill="#00f0e6" font-family="'Outfit', 'Inter', sans-serif" font-size="12" font-weight="900" letter-spacing="2" text-anchor="middle">STUDYAI</text>
+  </g>
+</svg>

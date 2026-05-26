@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Allow: /favicon.svg
+Allow: /favicon.ico
+Allow: /site.webmanifest
+Allow: /sitemap.xml
+
+Sitemap: https://study-ai-pro-testing-arhan.vercel.app/sitemap.xml
