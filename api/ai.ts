@@ -157,23 +157,8 @@ Generate 3 to 6 high-vibe flashcards tailored to CBSE/ICSE grades. Ensure proper
 
     // Retrieve active environment secret
     const geminiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
-    if (!geminiKey) {
-      return res.status(500).json({
-        error: "GEMINI_API_KEY is not configured. Please add it to your environment variables first."
-      });
-    }
-
-    const ai = new GoogleGenAI({
-      apiKey: geminiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build-vercel',
-        }
-      }
-    });
-
+    
     const isJson = ["mm", "quiz", "fc_gen"].includes(persona);
-
     const config: any = {
       systemInstruction: systemPrompt,
       temperature: 0.7,
@@ -183,14 +168,140 @@ Generate 3 to 6 high-vibe flashcards tailored to CBSE/ICSE grades. Ensure proper
       config.responseMimeType = "application/json";
     }
 
-    const genResponse = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config,
-    });
+    if (geminiKey) {
+      const ai = new GoogleGenAI({
+        apiKey: geminiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build-vercel',
+          }
+        }
+      });
 
-    const reply = genResponse.text || "No response received from study expert.";
-    return res.status(200).json({ reply });
+      // Try multiple GenAI models sequentially to mitigate quota exhaustion (429) errors
+      const candidateModels = ["gemini-3.5-flash", "gemini-2.5-flash"];
+      let lastGenAIError: any = null;
+      let reply: string | null = null;
+
+      for (const modelName of candidateModels) {
+        try {
+          console.log(`[Vercel API] Attempting AI generation using model: ${modelName}`);
+          const genResponse = await ai.models.generateContent({
+            model: modelName,
+            contents: prompt,
+            config,
+          });
+          if (genResponse && genResponse.text) {
+            reply = genResponse.text;
+            break;
+          }
+        } catch (err: any) {
+          lastGenAIError = err;
+          const errMsg = String(err?.message || err || "").toLowerCase();
+          console.warn(`[Vercel API] Generation failed with model ${modelName}:`, errMsg);
+          
+          // Check for 429 or quota limit block to proceed to next model
+          const isQuota = err?.status === 429 || 
+                          err?.statusCode === 429 || 
+                          errMsg.includes("429") || 
+                          errMsg.includes("quota") || 
+                          errMsg.includes("exhausted") ||
+                          errMsg.includes("limit");
+          
+          if (isQuota) {
+            console.log(`[Vercel API] Quota limit hit on ${modelName}. Moving to next candidate...`);
+            continue;
+          }
+        }
+      }
+
+      if (reply) {
+        return res.status(200).json({ reply });
+      }
+
+      // If we failed all Gemini candidates, but we have a Groq fallback, proceed to Groq!
+      if (process.env.GROQ_API_KEY) {
+        console.log("[Vercel API] Falling back to Groq API connection due to Gemini rate limits.");
+        try {
+          const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              model: "llama-3.3-70b-versatile",
+              temperature: 0.6,
+              max_tokens: 2048,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: prompt }
+              ]
+            })
+          });
+
+          if (response.ok) {
+            const groqData = await response.json();
+            const groqReply = groqData.choices?.[0]?.message?.content;
+            if (groqReply) {
+              return res.status(200).json({ reply: groqReply });
+            }
+          }
+        } catch (groqErr) {
+          console.error("[Vercel API] Groq fallback also failed:", groqErr);
+        }
+      }
+
+      // If we exhausted all fallbacks and has a quota limit error, return a premium message
+      const finalErrorMsg = String(lastGenAIError?.message || lastGenAIError || "").toLowerCase();
+      const isQuota = lastGenAIError?.status === 429 || 
+                      lastGenAIError?.statusCode === 429 || 
+                      finalErrorMsg.includes("429") || 
+                      finalErrorMsg.includes("quota") || 
+                      finalErrorMsg.includes("exhausted") ||
+                      finalErrorMsg.includes("limit");
+
+      if (isQuota) {
+        return res.status(429).json({
+          error: "StudyAI's deep-curation engine is currently experiencing remarkably high demand and has temporarily reached its free-tier academic quota. To continue instantly, you can wait about 60 seconds for the quota window to reset, or supply your own developer key in Settings > Secrets. We profound appreciate your brilliant focus! 📚"
+        });
+      }
+
+      return res.status(500).json({
+        error: lastGenAIError?.message || "All generative models are temporarily busy preparing StudyAI lessons. Please try again shortly."
+      });
+    }
+
+    // fallback when no gemini Key is configured but GROQ is
+    if (process.env.GROQ_API_KEY) {
+      console.log("[Vercel API] Gemini key missing, attempting direct GROQ endpoint.");
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          temperature: 0.6,
+          max_tokens: 2048,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: prompt }
+          ]
+        })
+      });
+
+      if (response.ok) {
+        const groqData = await response.json();
+        const reply = groqData.choices?.[0]?.message?.content || "No response received.";
+        return res.status(200).json({ reply });
+      }
+    }
+
+    return res.status(500).json({
+      error: "GEMINI_API_KEY is not configured. Please add it to your environment variables first."
+    });
 
   } catch (error: any) {
     console.error("Vercel Serverless Error:", error);

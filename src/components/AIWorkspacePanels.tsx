@@ -28,7 +28,7 @@ import VirtualKeyboard from "./keyboard/VirtualKeyboard";
 interface AIWorkspacePanelsProps {
   state: AppState;
   activeSection: "pyq" | "pred" | "doubts" | "strat" | "motiv" | "weak";
-  onCallAI: (prompt: string, persona: string) => Promise<string | null>;
+  onCallAI: (prompt: string, persona: string, signal?: AbortSignal) => Promise<string | null>;
   onUpdateStats: (updater: (prev: AppState["stats"]) => AppState["stats"]) => void;
   profileName?: string;
 }
@@ -241,6 +241,16 @@ Provide your response adhering strictly to the Feynman format requested (Simple 
   };
 
   // --- 2. Indian Board PYQ Generator States ---
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   const [selectedYr, setSelectedYr] = useState("2026");
   const [selectedPaperType, setSelectedPaperType] = useState("Board Exam");
   const [pyqOutput, setPyqOutput] = useState<string | null>(null);
@@ -262,6 +272,10 @@ Provide your response adhering strictly to the Feynman format requested (Simple 
   const [deepDiveLoading, setDeepDiveLoading] = useState(false);
 
   const handleGeneratePYQ = async () => {
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
     setPyqLoading(true);
     setPyqOutput(null);
     setSolutionsOutput(null);
@@ -285,12 +299,25 @@ STRICT DESIGN BLUEPRINT ENFORCEMENT:
 5. Give full mathematical details and analytical context. Do not use generic placeholders.
 Format the output beautifully with bold headers, standard general instructions, Section marks details, and clean line breaks.`;
 
-    const result = await onCallAI(paperPrompt, "pyq");
-    if (result) setPyqOutput(result);
-    setPyqLoading(false);
+    try {
+      const result = await onCallAI(paperPrompt, "pyq", signal);
+      if (result) setPyqOutput(result);
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error("PYQ generation error:", err);
+      }
+    } finally {
+      if (!signal.aborted) {
+        setPyqLoading(false);
+      }
+    }
   };
 
   const handleGenerateTopperHacks = async () => {
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
     setHacksLoading(true);
     setHacksOutput(null);
     try {
@@ -301,23 +328,33 @@ Format the output beautifully with bold headers, standard general instructions, 
 3. ✍️ Special terminology examiners look for to award full scores on answers.
 4. 🧠 Quick mnemonics & memory aids to remember hard units easily.
 Keep it extremely encouraging, structural, styled in beautiful readable blocks, and highly inspiring!`,
-        "doubts"
+        "doubts",
+        signal
       );
       if (result) {
         setHacksOutput(result);
       } else {
         setHacksOutput("Could not draft cheatcode. Check network and call again.");
       }
-    } catch (err) {
-      console.error(err);
-      setHacksOutput("Failed fetching helper.");
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error(err);
+        setHacksOutput("Failed fetching helper.");
+      }
     } finally {
-      setHacksLoading(false);
+      if (!signal.aborted) {
+        setHacksLoading(false);
+      }
     }
   };
 
   const handleGenerateSolutions = async () => {
     if (!pyqOutput) return;
+
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
     setSolutionsLoading(true);
     setSolutionsOutput(null);
     setActivePyqTab("solutions");
@@ -338,21 +375,28 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
     }, 2800);
 
     try {
-      const result = await onCallAI(
-        `Review the provided official Class ${state.cls} ${state.sub} ${selectedPaperType} question paper:\n\n${pyqOutput}\n\nProvide the complete question paper with step-by-step answers. Let's make it the absolute best learning material! Keep the tutoring explanations extremely clear, engaging, and friendly (like a mentor explaining on a whiteboard in very easy plain English and simple language). For EVERY single answer:\n- Output "**Question X - Answer Key**" in bold.\n- Give the complete solved mathematical steps, arithmetic derivations, or core diagrams description.\n- Use a "💡 Friendly Analogy" to help them grasp it instantly.\n- Use an "🧠 Exam Memory Trick & Mnemonic" to memorize definitions or formulas easily.\n\nStructure the entire key beautifully with clear dividers, superb spacing, and lots of encouragement!`,
-        "doubts"
-      );
+      const solutionPrompt = `Review the provided official Class ${state.cls} ${state.sub} ${selectedPaperType} question paper:\n\n${pyqOutput}\n\nProvide direct, comprehensive, and crisp step-by-step answers for the major questions in this paper. Let's make it the absolute best learning material! Keep explanations of core steps engaging and clear, like an elite, friendly mentor writing on a board. To keep the generation fast, elegant, and highly performant:
+- Group smaller or multiple-choice questions (Section A) into a tabular or swift bulleted index with rapid answers.
+- For structured/numerical/long questions, show the exact formula, arithmetic steps, and crucial marks-awarding derivations in full.
+- Accompany key sections with a concise "💡 Friendly Analogy" and "🧠 Memory Trick" so they grasp and memorize core terms instantly.
+- Output "**Question X - Answer Key**" in bold for distinct readability.`;
+
+      const result = await onCallAI(solutionPrompt, "doubts", signal);
       if (result) {
         setSolutionsOutput(result);
       } else {
         setSolutionsOutput("An unexpected issue occurred. Please check your config and try again!");
       }
-    } catch (e) {
-      console.error(e);
-      setSolutionsOutput("Failed to fetch solutions from AI oracle. Please attempt again.");
+    } catch (e: any) {
+      if (e.name !== 'AbortError') {
+        console.error(e);
+        setSolutionsOutput("Failed to fetch solutions from AI oracle. Please attempt again.");
+      }
     } finally {
       clearInterval(interval);
-      setSolutionsLoading(false);
+      if (!signal.aborted) {
+        setSolutionsLoading(false);
+      }
     }
   };
 
@@ -615,7 +659,8 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
         </div>
       );
 
-    case "pyq":
+    case "pyq": {
+      const isPYQProcessing = pyqLoading || solutionsLoading || hacksLoading;
       return (
         <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 shadow-xl space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
@@ -731,15 +776,55 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
             </div>
           )}
 
-          {pyqLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 space-y-4">
-              <div className="relative flex items-center justify-center">
-                <RefreshCw className="animate-spin text-indigo-400" size={32} />
-                <Sparkles className="absolute text-indigo-300 animate-pulse" size={14} />
+          {isPYQProcessing ? (
+            <div className="relative overflow-hidden rounded-3xl bg-slate-950/75 border border-white/10 p-8 md:p-12 shadow-2xl backdrop-blur-2xl flex flex-col items-center justify-center text-center space-y-8 min-h-[460px]">
+              {/* Complex Glowing Orbit Ring Spinner */}
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                {/* Outer spinning aura gradient */}
+                <div className="absolute inset-0 rounded-full border border-dashed border-indigo-500/30 animate-[spin_12s_linear_infinite]" />
+                <div className="absolute inset-3 rounded-full border border-indigo-400/40 animate-[spin_6s_linear_infinite]" />
+                {/* Middle pulsing neon circle */}
+                <div className="absolute inset-6 rounded-full bg-gradient-to-tr from-indigo-500/20 via-pink-500/20 to-amber-500/20 animate-pulse blur-sm" />
+                <div className="absolute inset-9 rounded-full border border-pink-400/60 animate-[spin_8s_linear_infinite_reverse]" />
+                {/* Core flashing center */}
+                <div className="relative w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 via-pink-500 to-amber-500 flex items-center justify-center shadow-[0_0_25px_rgba(236,72,153,0.73)]">
+                  <Sparkles size={14} className="text-white animate-bounce" />
+                </div>
               </div>
-              <div className="space-y-1 text-center">
-                <p className="text-sm font-bold text-white tracking-wide">Compiling historical pattern guidelines...</p>
-                <p className="text-xs text-white/30 font-mono">Formulating exact marks weightage blueprints with Class {state.cls} {state.sub} standards</p>
+
+              {/* Shimmer Active Header */}
+              <div className="space-y-2">
+                <span className="text-[10px] sm:text-xs font-mono tracking-[0.25em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-pink-400 font-black animate-pulse">
+                  STUDYAI GENERATION ENGINE ACTIVE
+                </span>
+                <h3 className="text-xl md:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 tracking-tight font-display drop-shadow-[0_2px_10px_rgba(255,255,255,0.08)]">
+                  {pyqLoading ? "METICULOUSLY ENGINEERING HIGH-YIELD PAPER" : solutionsLoading ? "SOLVING STUDYAI STEP-BY-STEP KEYS" : "DRAFTING TOPPER CHEAT HACKS"}
+                </h3>
+              </div>
+
+              {/* Mandatory Loading Text Block with exact spacing, formatting, and punctuation */}
+              <div className="max-w-2xl mx-auto space-y-4 text-slate-200 text-xs sm:text-sm leading-relaxed text-center font-sans tracking-wide">
+                <p>
+                  To deliver absolute perfection, StudyAI Pro is meticulously engineering your high-yield mock blueprints, step-by-step master keys, and elite topper hacks.
+                </p>
+                <p>
+                  Because a global community of ambitious scholars is currently accessing our core engine, this ultra-deep, error-free curation can take up to <strong className="text-amber-300 font-extrabold px-0.5 border-b border-amber-300/20 shadow-[0_4px_12px_rgba(217,119,6,0.25)]">5 minutes</strong>.
+                </p>
+                <p>
+                  We profoundly appreciate your elegant patience. Masterpieces take a moment to craft—your ultimate academic advantage is landing shortly. ✨
+                </p>
+              </div>
+
+              {/* Dynamic steps tracker */}
+              <div className="flex items-center gap-3 bg-white/[0.03] border border-white/5 px-6 py-3 rounded-full text-xs font-mono text-indigo-300 tracking-wider">
+                <RefreshCw size={13} className="animate-spin text-cyan-400" />
+                <span>
+                  {pyqLoading 
+                    ? `Formulating exact marks weightage for Class ${state.cls} ${state.sub} standards...` 
+                    : solutionsLoading 
+                    ? loadingStepText 
+                    : "Unlocking elite topper secrets..."}
+                </span>
               </div>
             </div>
           ) : pyqOutput ? (
@@ -1004,6 +1089,7 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
           )}
         </div>
       );
+    }
 
     case "pred":
       return (

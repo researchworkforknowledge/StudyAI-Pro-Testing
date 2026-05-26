@@ -150,10 +150,20 @@ Generate 3 to 6 high-vibe flashcards tailored to CBSE/ICSE grades. Ensure proper
       const systemPrompt = (systemMessages[persona] || systemMessages.doubts) +
         `\n\n[Context - Board: ${board || 'CBSE'}, Class: ${cls || '10'}, Subject: ${sub || 'Mathematics'}]`;
 
-      // 1. Try Gemini API first (Preferred system rule)
+      // 1. Try Gemini API first (Preferred system rule with sequential model failovers)
       const geminiApiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+      
+      const config: any = {
+        systemInstruction: systemPrompt,
+        temperature: 0.7,
+      };
+
+      if (persona === "mm" || persona === "quiz" || persona === "fc_gen") {
+        config.responseMimeType = "application/json";
+      }
+
       if (geminiApiKey) {
-        console.log("Using professional Gemini API for AI request context.");
+        console.log("Using professional Gemini API with sequential fallback capabilities.");
         const ai = new GoogleGenAI({
           apiKey: geminiApiKey,
           httpOptions: {
@@ -163,29 +173,102 @@ Generate 3 to 6 high-vibe flashcards tailored to CBSE/ICSE grades. Ensure proper
           }
         });
 
-        // Use schema rules if mindmap or quiz is targeted
-        const config: any = {
-          systemInstruction: systemPrompt,
-          temperature: 0.7,
-        };
+        const candidateModels = ["gemini-3.5-flash", "gemini-2.5-flash"];
+        let lastError: any = null;
+        let reply: string | null = null;
 
-        if (persona === "mm" || persona === "quiz" || persona === "fc_gen") {
-          config.responseMimeType = "application/json";
+        for (const modelName of candidateModels) {
+          try {
+            console.log(`[Express Server] Attempting AI generation using model: ${modelName}`);
+            const genResponse = await ai.models.generateContent({
+              model: modelName,
+              contents: prompt,
+              config,
+            });
+            if (genResponse && genResponse.text) {
+              reply = genResponse.text;
+              break;
+            }
+          } catch (err: any) {
+            lastError = err;
+            const errMsg = String(err?.message || err || "").toLowerCase();
+            console.warn(`[Express Server] Model ${modelName} failed generation attempt:`, errMsg);
+            
+            // Proceed to next fallback model if quota / 429 is hit
+            const isQuota = err?.status === 429 || 
+                            err?.statusCode === 429 || 
+                            errMsg.includes("429") || 
+                            errMsg.includes("quota") || 
+                            errMsg.includes("exhausted") || 
+                            errMsg.includes("limit");
+            
+            if (isQuota) {
+              console.log(`[Express Server] Quota exhausted on ${modelName}. Trying the next fallback...`);
+              continue;
+            }
+          }
         }
 
-        const genResponse = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: prompt,
-          config,
-        });
+        if (reply) {
+          return res.json({ reply });
+        }
 
-        const reply = genResponse.text || "No response received from study expert.";
-        return res.json({ reply });
+        // 2. Failsafe Groq fallback if Gemini models are fully exhausted and GROQ is configured
+        if (process.env.GROQ_API_KEY) {
+          console.log("[Express Server] Gemini candidate models exhausted, falling back to Groq system.");
+          try {
+            const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                temperature: 0.6,
+                max_tokens: 2048,
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: prompt }
+                ]
+              })
+            });
+
+            if (response.ok) {
+              const groqData = await response.json();
+              const groqReply = groqData.choices?.[0]?.message?.content;
+              if (groqReply) {
+                return res.json({ reply: groqReply });
+              }
+            }
+          } catch (groqErr) {
+            console.error("[Express Server] Groq fallback failed:", groqErr);
+          }
+        }
+
+        // Evaluate if the last captured error is a quota exhaustion block to customize toast output
+        const finalErrorMsg = String(lastError?.message || lastError || "").toLowerCase();
+        const isQuota = lastError?.status === 429 || 
+                        lastError?.statusCode === 429 || 
+                        finalErrorMsg.includes("429") || 
+                        finalErrorMsg.includes("quota") || 
+                        finalErrorMsg.includes("exhausted") || 
+                        finalErrorMsg.includes("limit");
+
+        if (isQuota) {
+          return res.status(429).json({
+            error: "StudyAI's deep-curation engine is currently experiencing remarkably high demand and has temporarily reached its free-tier academic quota. To continue instantly, you can wait about 60 seconds for the quota window to reset, or supply your own developer key in Settings > Secrets. We profound appreciate your brilliant focus! 📚"
+          });
+        }
+
+        return res.status(500).json({
+          error: lastError?.message || "All generative models are temporarily busy preparing StudyAI lessons. Please try again shortly."
+        });
       }
 
-      // 2. Backward compatibility fallback to Groq if configured
+      // 3. direct Groq fallback if gemini key is completely missing
       if (process.env.GROQ_API_KEY) {
-        console.log("Falling back to Groq API connection.");
+        console.log("Direct Groq path active (Gemini key missing completely).");
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -213,7 +296,7 @@ Generate 3 to 6 high-vibe flashcards tailored to CBSE/ICSE grades. Ensure proper
         return res.json({ reply });
       }
 
-      // 3. Last fallback if no API key is specified (We can warn details)
+      // 4. Fallback if both configuration options are missing
       return res.status(500).json({
         error: "StudyAI Pro AI server is initializing. Please set GEMINI_API_KEY or GROQ_API_KEY in the platform secret panels."
       });

@@ -666,11 +666,12 @@ function App() {
   }, [state.timer.running, state.timer.mode]);
 
   // Core API fetcher helper
-  const handleCallAI = async (prompt: string, persona: string): Promise<string | null> => {
+  const handleCallAI = async (prompt: string, persona: string, signal?: AbortSignal): Promise<string | null> => {
     try {
       const response = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal,
         body: JSON.stringify({
           prompt,
           persona,
@@ -690,7 +691,11 @@ function App() {
 
       const data = await response.json();
       return data.reply;
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        console.log("AI fetch request aborted safely.");
+        return null;
+      }
       console.warn("AI connection failed, offline state retry prompted:", err);
       triggerToast("AI educator is currently busy. Please retry in a moment!");
       return null;
