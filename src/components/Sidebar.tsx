@@ -30,6 +30,18 @@ interface SidebarProps {
   streak: number;
 }
 
+const StudyAILogoIcon = ({ size, className }: { size?: number; className?: string }) => {
+  return (
+    <div className={`flex items-center justify-center ${className}`} style={{ width: size || 16, height: size || 16 }}>
+      <img 
+        src="/favicon.svg" 
+        alt="StudyAI Logo" 
+        className="w-full h-full object-contain filter drop-shadow-[0_0_4px_rgba(56,189,248,0.5)]" 
+      />
+    </div>
+  );
+};
+
 export default function Sidebar({
   activeTab,
   onTabChange,
@@ -51,7 +63,7 @@ export default function Sidebar({
     { id: "hw", label: "Homework", icon: CheckSquare },
     { id: "doubts", label: "Feynman Chat", icon: MessageSquare, badge: "Voice" },
     { id: "weak", label: "Weak Areas", icon: AlertTriangle },
-    { id: "res", label: "Official Portal", icon: Globe },
+    { id: "res", label: "Official Portal", icon: StudyAILogoIcon },
     { id: "strat", label: "Study Tactics", icon: TrendingUp },
     { id: "motiv", label: "Coach Uplift", icon: HeartHandshake }
   ];
@@ -132,11 +144,11 @@ export default function Sidebar({
           </div>
           {!collapsed && (
             <div className="overflow-hidden">
-              <p className="text-xs font-bold text-white truncate flex items-center gap-1">
-                Arhan <span className="text-[8px] bg-indigo-500/30 text-indigo-300 font-mono px-1.5 py-0.5 rounded-full border border-indigo-500/40 font-bold uppercase">Owner</span>
+              <p className="text-xs font-bold text-white truncate flex items-center gap-1" title="Honourable Master Arhan">
+                Honourable Master Arhan
               </p>
               <p className="text-[9px] text-[#0bb6ae] font-mono font-medium flex items-center gap-1">
-                <ShieldCheck size={10} /> Creator & Programmer
+                <ShieldCheck size={10} /> Principal Owner & Lead Programmer
               </p>
             </div>
           )}

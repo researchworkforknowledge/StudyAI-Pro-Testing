@@ -65,7 +65,7 @@ export default function App() {
   const [simAvatar, setSimAvatar] = useState("🚀");
   const [authStep, setAuthStep] = useState(0); // 0=Form, 1=Animation Loader
 
-  // Custom high-octane retro acoustic dopamine synthesizer engineered by Arhan
+  // Custom high-octane retro acoustic dopamine synthesizer engineered by Honourable Master Arhan
   const playDopamineSound = (sType: "success" | "levelUp" | "correct" | "wrong" | "click" | "powerUp" = "click") => {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -543,7 +543,7 @@ export default function App() {
 
         const nextTrackName = catalogTracks[selectedNextTrackIndex]?.t || "Lofi Ambient";
         setTimeout(() => {
-          triggerToast(`🎵 Auto-Cycled: "${nextTrackName}" | Handcrafted Study Playlist by Arhan!`);
+          triggerToast(`🎵 Auto-Cycled: "${nextTrackName}" | Handcrafted Study Playlist by Honourable Master Arhan!`);
         }, 80);
 
         return {
@@ -1262,7 +1262,7 @@ Content:\n${noteContent}`;
 
                     const nextTrackName = catalogTracks[selectedNextTrackIndex]?.t || "Lofi Ambient";
                     setTimeout(() => {
-                      triggerToast(`🎵 Skip: Playing "${nextTrackName}" | Curated by Arhan`);
+                      triggerToast(`🎵 Skip: Playing "${nextTrackName}" | Curated by Honourable Master Arhan`);
                     }, 80);
 
                     return { ...prev, track: selectedNextTrackIndex, lofi: true };

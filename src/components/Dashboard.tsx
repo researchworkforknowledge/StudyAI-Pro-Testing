@@ -130,8 +130,13 @@ export default function Dashboard({
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-mono text-xs font-semibold border border-indigo-500/30">
               ✨ {state.board} Topper Track Enabled
             </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0bb6ae]/20 text-[#0bb6ae] font-mono text-xs font-semibold border border-[#0bb6ae]/30">
-              👑 Made by Arhan (Owner & Developer)
+            <div className="inline-flex items-start md:items-center gap-2 px-3.5 py-1.5 rounded-2xl md:rounded-full bg-[#0bb6ae]/15 text-[#0bb6ae] font-mono text-xs font-semibold border border-[#0bb6ae]/25 leading-relaxed max-w-full shadow-[0_2px_12px_rgba(11,182,174,0.08)]">
+              <span className="flex-shrink-0 text-sm">👑</span>
+              <span className="break-words">
+                Built Specially by <span className="text-white font-bold">Honourable Master Arhan</span>
+                <span className="mx-2 opacity-40 hidden md:inline">|</span>
+                <span className="block md:inline text-[10px] md:text-xs text-indigo-300 font-medium">Principal Owner & Lead Programmer</span>
+              </span>
             </div>
           </div>
           <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white font-display">
@@ -401,25 +406,25 @@ export default function Dashboard({
             </div>
           </div>
 
-          {/* Arhan's Cosmic Dopamine Boosters Hub */}
+          {/* Honourable Master Arhan's Cosmic Dopamine Boosters Hub */}
           <div className="bg-gradient-to-br from-[#0c0c20] to-[#1a1a3a] border border-indigo-500/30 rounded-3xl p-6 shadow-[0_10px_30px_rgba(79,70,229,0.15)] space-y-4 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-pink-500/10 rounded-full blur-2xl pointer-events-none"></div>
             
             <div className="flex items-center gap-2 relative z-10">
               <span className="text-xl">👑</span>
               <div>
-                <h3 className="text-sm font-extrabold text-white font-display">Arhan's Cosmic Dopamine Boosters Hub</h3>
-                <p className="text-[9px] text-[#00d4cc] font-mono font-bold tracking-widest uppercase">ENGINEERED BY OWNER ARHAN</p>
+                <h3 className="text-sm font-extrabold text-white font-display">Honourable Master Arhan's Cosmic Dopamine Boosters Hub</h3>
+                <p className="text-[9px] text-[#00d4cc] font-mono font-bold tracking-widest uppercase">ENGINEERED BY PRINCIPAL OWNER & LEAD PROGRAMMER HONOURABLE MASTER ARHAN</p>
               </div>
             </div>
             
             <p className="text-xs text-white/60 leading-relaxed relative z-10 font-sans">
-              Fire custom neurotransmitter loops by activating Arhan's hand-crafted StudyAI Pro routing.
+              Fire custom neurotransmitter loops by activating Honourable Master Arhan's hand-crafted StudyAI Pro routing.
             </p>
 
             <div className="space-y-2 relative z-10">
               {[
-                { id: "api", title: "Activate StudyAI Pro Custom API", xp: "+250 XP", sub: "Inject premium micro-services bypass designed by respected Arhan", icon: "🌌", sType: "levelUp" },
+                { id: "api", title: "Activate StudyAI Pro Custom API", xp: "+250 XP", sub: "Inject premium micro-services bypass designed by Honourable Master Arhan", icon: "🌌", sType: "levelUp" },
                 { id: "scribe", title: "Overclock Scribe Core 4.3", xp: "+150 XP", sub: "Load advanced logical reasoning clusters manually", icon: "✨", sType: "powerUp" },
                 { id: "quantum", title: "Synchronize Cognitive Waves", xp: "+100 XP", sub: "Align binaural nodes for maximum mnemonic retention", icon: "🔮", sType: "success" }
               ].map((item) => {

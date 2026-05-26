@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { AnimatePresence } from "motion/react";
 import {
   MessageSquare,
   Sparkles,
@@ -18,9 +19,11 @@ import {
   Zap,
   Check,
   Paperclip,
-  HelpCircle
+  HelpCircle,
+  Keyboard
 } from "lucide-react";
 import { AppState, ChatMessage } from "../types";
+import VirtualKeyboard from "./keyboard/VirtualKeyboard";
 
 interface AIWorkspacePanelsProps {
   state: AppState;
@@ -97,6 +100,45 @@ export default function AIWorkspacePanels({ state, activeSection, onCallAI, onUp
 
   const chatFileRef = useRef<HTMLInputElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLInputElement>(null);
+  const [showKeyboard, setShowKeyboard] = useState(false);
+
+  // Voice speech recognition system
+  const [recognition, setRecognition] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const rec = new SpeechRecognition();
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.lang = "en-IN"; // Set to Indian English/Bilingual
+        
+        rec.onresult = (event: any) => {
+          let consolidated = "";
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              consolidated += event.results[i][0].transcript;
+            }
+          }
+          if (consolidated) {
+            setUserInput((prev) => prev ? prev + " " + consolidated : consolidated);
+          }
+        };
+
+        rec.onerror = (err: any) => {
+          console.warn("Speech recognition error:", err);
+        };
+
+        rec.onend = () => {
+          // Keep state consistent if stopped
+        };
+
+        setRecognition(rec);
+      }
+    }
+  }, []);
 
   // Auto scroll chat to bottom when logs update or loading starts
   useEffect(() => {
@@ -119,16 +161,29 @@ export default function AIWorkspacePanels({ state, activeSection, onCallAI, onUp
     }
   };
 
-  // Voice Mode listener emulation
+  // Voice Mode listener real engine integration with fallback emulator
   const handleVoiceToggle = () => {
     if (isVoiceListening) {
       setIsVoiceListening(false);
+      if (recognition) {
+        try { recognition.stop(); } catch (e) {}
+      }
     } else {
       setIsVoiceListening(true);
-      setTimeout(() => {
-        setIsVoiceListening(false);
-        setUserInput("Can you explain how photosynthesis works in green plants Class 10 terms?");
-      }, 3000);
+      if (recognition) {
+        try {
+          setUserInput("");
+          recognition.start();
+        } catch (e) {
+          console.error("Start speech failed:", e);
+        }
+      } else {
+        // Fallback simulated voice transcription
+        setTimeout(() => {
+          setIsVoiceListening(false);
+          setUserInput("Explain how photoelectric effect is connected to Einstein Nobel prize theory.");
+        }, 3000);
+      }
     }
   };
 
@@ -415,7 +470,11 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
           </div>
 
           {/* Dialog Log Scrollbox */}
-          <div ref={chatScrollRef} className="flex-1 overflow-y-auto space-y-4 max-h-[360px] pr-2 scroll-smooth">
+          <div
+            ref={chatScrollRef}
+            className="flex-1 overflow-y-auto space-y-4 pr-2 scroll-smooth transition-all duration-300"
+            style={{ maxHeight: showKeyboard ? "160px" : "360px" }}
+          >
             {chatLog.map((msg, mIdx) => (
               <div
                 key={mIdx}
@@ -485,6 +544,7 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
             <button
               type="button"
               onClick={() => chatFileRef.current?.click()}
+              onMouseDown={(e) => e.preventDefault()}
               className="p-3 rounded-full bg-slate-900 border border-slate-700 text-slate-400 hover:text-indigo-400 hover:border-slate-500 transition-all cursor-pointer flex items-center justify-center flex-shrink-0"
               title="Attach study file (.txt, .md, .json to ask doubts)"
             >
@@ -494,6 +554,7 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
             <button
               type="button"
               onClick={handleVoiceToggle}
+              onMouseDown={(e) => e.preventDefault()}
               className={`p-3 rounded-full border transition-all flex items-center justify-center flex-shrink-0 ${
                 isVoiceListening
                   ? "bg-rose-500/20 text-rose-400 border-rose-500 animate-pulse"
@@ -504,8 +565,23 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
               {isVoiceListening ? <MicOff size={16} /> : <Mic size={16} />}
             </button>
 
+            <button
+              type="button"
+              onClick={() => setShowKeyboard(!showKeyboard)}
+              onMouseDown={(e) => e.preventDefault()}
+              className={`p-3 rounded-full border transition-all flex items-center justify-center flex-shrink-0 keyboard-toggle ${
+                showKeyboard
+                  ? "bg-cyan-500/20 text-cyan-400 border-cyan-400 animate-pulse"
+                  : "bg-slate-900 border-slate-700 text-slate-400 hover:text-indigo-400 hover:border-slate-500"
+              }`}
+              title="Toggle Multilingual & STEM Keyboard"
+            >
+              <Keyboard size={16} />
+            </button>
+
             <input
               type="text"
+              ref={chatInputRef}
               placeholder={isVoiceListening ? "Listening Spoken doubt..." : "Attach doc or type e.g. why is speed of light constant?"}
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
@@ -522,10 +598,20 @@ Keep it extremely encouraging, structural, styled in beautiful readable blocks, 
           </form>
 
           {isVoiceListening && (
-            <p className="text-[10px] text-rose-400 font-mono text-center tracking-wider animate-pulse uppercase font-black">
+            <p className="text-[10px] text-rose-400 font-mono text-center tracking-wider animate-pulse uppercase font-black mt-2">
               🗣️ listening to voice... say doubt in English
             </p>
           )}
+
+          <AnimatePresence>
+            {showKeyboard && (
+              <VirtualKeyboard
+                inputElement={chatInputRef.current}
+                onInsertValue={(val) => setUserInput(val)}
+                onClose={() => setShowKeyboard(false)}
+              />
+            )}
+          </AnimatePresence>
         </div>
       );
 

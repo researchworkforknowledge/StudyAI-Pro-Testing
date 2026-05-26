@@ -152,7 +152,7 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
     },
     {
       q: "How does the custom StudyAI Pro API protect my security and keep things fast?",
-      a: "Arhan's custom-designed API protects your progress and prevents key leaks by running all queries securely on our hyper-fast private backend server. Respected Arhan engineered this so that no client-side headers or tokens can ever be inspected or abused."
+      a: "Honourable Master Arhan's custom-designed API protects your progress and prevents key leaks by running all queries securely on our hyper-fast private backend server. Honourable Master Arhan engineered this so that no client-side headers or tokens can ever be inspected or abused."
     },
     {
       q: "How does the gamification engine work?",
@@ -342,7 +342,7 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
           <Sparkles size={13} className="text-indigo-300 animate-spin-slow" />
           <span>INDIAN SYLLABUS BLUEPRINTS POWERED BY STUDYAI PRO API</span>
           <span className="w-1.5 h-1.5 rounded-full bg-[#0bb6ae] animate-pulse"></span>
-          <span className="text-[10px] text-slate-100 font-bold tracking-wider uppercase">v4.3 Custom Core by Arhan</span>
+          <span className="text-[10px] text-slate-100 font-bold tracking-wider uppercase">v4.3 Custom Core by Honourable Master Arhan</span>
         </motion.div>
 
         {/* Cinematic Backdrop Ambient Glow Orb (loads immediately behind the headline block) */}
@@ -377,17 +377,22 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
             
             {/* Second Line (Cinematic) */}
             <CinematicTitle 
-              text="Designed by Respected" 
-              className="text-2xl sm:text-4xl md:text-5xl lg:text-[3.5rem] leading-[1.1] font-extrabold mt-3 drop-shadow-[0_2px_20px_rgba(124,107,239,0.3)] font-display text-center" 
-              gradient="from-[#b6a7fa] via-[#7c6bef] to-[#e4d6ff]"
-              glowColor="rgba(124, 107, 239, 0.65)"
+              text="Designed by" 
+              className="text-2xl sm:text-4xl md:text-5xl lg:text-[3.5rem] leading-[1.1] font-extrabold mt-3 font-display text-center" 
+              glowColor="rgba(255, 255, 255, 0.4)"
               delayOffset={0.5}
+              customStyle={{
+                background: "linear-gradient(to bottom, #FFFFFF 60%, #E2E8F0 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                textShadow: "0 0 20px rgba(255, 255, 255, 0.4), 0 0 40px rgba(6, 182, 212, 0.2)"
+              }}
             />
 
             {/* Third Line (Cinematic Brand Power) */}
             <CinematicTitle 
-              text="Arhan" 
-              className="text-5xl sm:text-7xl md:text-8xl lg:text-[5.8rem] leading-[1.05] font-black uppercase mt-4 drop-shadow-[0_6px_35px_rgba(11,182,174,0.5)] font-display text-center tracking-widest" 
+              text="Honourable Master Arhan" 
+              className="text-4xl sm:text-6xl md:text-7xl lg:text-[4.8rem] leading-[1.1] font-black uppercase mt-4 drop-shadow-[0_6px_35px_rgba(11,182,174,0.5)] font-display text-center tracking-wider" 
               gradient="from-[#00f0e6] via-[#38bdf8] to-[#7c6bef]"
               glowColor="rgba(0, 240, 230, 0.75)"
               delayOffset={0.9}
@@ -401,7 +406,7 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
             transition={{ duration: 1.8, delay: 1.25, ease: [0.16, 1, 0.3, 1] }}
             className="text-slate-100 text-xs sm:text-sm md:text-lg font-medium max-w-2xl mx-auto font-sans leading-relaxed tracking-wide select-none pt-2"
           >
-            Stop studying harder. Start studying smarter. A unified glassmorphic environment with an integrated Feynman Tutor, Mind Maps, active retrieval quizzes, and high-octane Pomodoro Lo-Fi loops. Powered by Arhan's custom fine-tuned micro-models for CBSE, ICSE, and competitive toppers.
+            Stop studying harder. Start studying smarter. A unified glassmorphic environment with an integrated Feynman Tutor, Mind Maps, active retrieval quizzes, and high-octane Pomodoro Lo-Fi loops. Powered by Honourable Master Arhan's custom fine-tuned micro-models for CBSE, ICSE, and competitive toppers.
           </motion.p>
         </div>
 
@@ -724,7 +729,7 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
               <span className="bg-gradient-to-r from-[#7c6bef] to-[#0bb6ae] bg-clip-text text-transparent">No login required.</span>
             </h3>
             <p className="text-white/60 text-sm md:text-base leading-relaxed">
-              We connected this sandbox directly to StudyAI Pro custom serverless API built by respected Arhan. Customize your exam prep output and trigger a response instantly. Experience the lightning-fast speed and pedagogical clarity.
+              We connected this sandbox directly to StudyAI Pro custom serverless API built by Honourable Master Arhan. Customize your exam prep output and trigger a response instantly. Experience the lightning-fast speed and pedagogical clarity.
             </p>
 
             <div className="space-y-3">
@@ -787,7 +792,7 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
             
             <div className="flex items-center gap-2 mb-4">
               <span className="w-2.5 h-2.5 rounded-full bg-indigo-500/85"></span>
-              <span className="text-xs font-mono font-bold text-indigo-400">StudyAI-Pro-Scribe-Core-API-v4 (Built specially by respected Arhan)</span>
+              <span className="text-xs font-mono font-bold text-indigo-400">StudyAI-Pro-Scribe-Core-API-v4 (Built specially by Honourable Master Arhan)</span>
             </div>
 
             <div className="flex-1 overflow-y-auto font-mono text-xs text-slate-300 space-y-2 pr-1 select-text">
@@ -916,7 +921,7 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
               logo: "🧬"
             },
             {
-              quote: "Having the secure StudyAI Pro API custom-made by respected Arhan live on our private server meant I could study at 3 AM with instant lag-free guidance and pristine syllabus compliance.",
+              quote: "Having the secure StudyAI Pro API custom-made by Honourable Master Arhan live on our private server meant I could study at 3 AM with instant lag-free guidance and pristine syllabus compliance.",
               author: "Advait Sen",
               sub: "UPSC Civils Finalist",
               logo: "🏛️"
@@ -1010,7 +1015,7 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
               price: "₹899/mo",
               features: [
                 "Vercel Node API Premium Edge Routing",
-                "Arhan Scribe Extreme Custom Model API",
+                "Honourable Master Arhan Scribe Extreme Custom Model API",
                 "Daily CBQ pattern forecasts",
                 "Priority cloud synchronization modules",
                 "Unlimited mock PDF key creations"
@@ -1071,7 +1076,7 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
             <span className="text-[10px] font-mono text-pink-400 font-extrabold tracking-widest uppercase block drop-shadow-[0_0_5px_rgba(244,114,182,0.3)]">🎁 INSTANT ACCESS REWARD DETECTED</span>
             <h5 className="text-base font-bold text-white font-sans tracking-tight">Claim +250 XP Launch Powerups and Feynman VIP Token</h5>
             <p className="text-xs text-slate-200 font-medium font-sans max-w-xl leading-relaxed">
-              By launching StudyAI Pro today, Arhan's master coordinator instantly pre-authorizes your local secure sandboxed context for higher generative response limits. Start studying immediately for Indian Boards with pure leverage.
+              By launching StudyAI Pro today, Honourable Master Arhan's master coordinator instantly pre-authorizes your local secure sandboxed context for higher generative response limits. Start studying immediately for Indian Boards with pure leverage.
             </p>
           </div>
           <button 
@@ -1156,7 +1161,7 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
               <span className="text-base font-extrabold text-white font-display tracking-tight">StudyAI Pro</span>
             </div>
             <p className="text-[12px] text-slate-300 font-sans font-medium leading-relaxed">
-              Billion-dollar study operating system. Created and owned by Arhan. Designed with real-time cognitive tracking & Syllabus alignment guides.
+              Billion-dollar study operating system. Created and owned by Honourable Master Arhan. Designed with real-time cognitive tracking & Syllabus alignment guides.
             </p>
           </div>
           <div>
@@ -1198,7 +1203,7 @@ export default function LandingPage({ onLaunchApp, onCallAI, onPlaySound, initia
             &copy; 2026 StudyAI Pro Inc. Platform curated with deep design engineering for CBSE, ICSE, JEE, and NEET-UG aspirants built with Love and HardWork.
           </p>
           <p className="text-xs font-mono font-semibold">
-            Engineered & Directed by <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-[#7c6bef] to-pink-500 font-extrabold drop-shadow-[0_0_10px_rgba(124,107,239,0.3)]">Arhan (Arhan is the Owner and Programmer)</span>
+            Engineered & Directed by <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-[#7c6bef] to-pink-500 font-extrabold drop-shadow-[0_0_10px_rgba(124,107,239,0.3)]">Honourable Master Arhan (Honourable Master Arhan is the Owner and Programmer)</span>
           </p>
         </div>
       </footer>
@@ -1886,6 +1891,7 @@ interface CinematicTitleProps {
   gradient?: string;
   glowColor?: string;
   delayOffset?: number;
+  customStyle?: React.CSSProperties;
 }
 
 // Splits titles into characters and words for smooth staggered reveals & kinetic hover
@@ -1894,7 +1900,8 @@ function CinematicTitle({
   className = "", 
   gradient, 
   glowColor = "rgba(124, 107, 239, 0.45)", 
-  delayOffset = 0 
+  delayOffset = 0,
+  customStyle
 }: CinematicTitleProps) {
   const words = text.split(" ");
   return (
@@ -1906,12 +1913,15 @@ function CinematicTitle({
             {characters.map((char, charIdx) => {
               const charGradientStyle = gradient 
                 ? `bg-gradient-to-r ${gradient} bg-clip-text text-transparent` 
-                : "text-white";
+                : customStyle 
+                  ? "" 
+                  : "text-white";
 
               return (
                 <motion.span
                   key={charIdx}
                   className={`inline-block origin-bottom will-change-transform font-display select-none cursor-default ${charGradientStyle}`}
+                  style={customStyle}
                   initial={{ opacity: 0, y: 35, rotateX: 25, filter: "blur(8px)", scale: 0.88 }}
                   animate={{ opacity: 1, y: 0, rotateX: 0, filter: "blur(0px)", scale: 1 }}
                   transition={{

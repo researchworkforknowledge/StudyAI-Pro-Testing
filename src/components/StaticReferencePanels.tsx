@@ -357,7 +357,7 @@ export default function StaticReferencePanels({
           <div className="rounded-2xl p-6 bg-[#12122c] border border-indigo-500/10 shadow-xl space-y-4">
             <div className="space-y-1">
               <h2 className="text-lg font-black text-white font-display flex items-center gap-2">
-                <Globe size={18} className="text-indigo-400" /> Stay-On-Site Portal
+                <img src="/favicon.svg" alt="StudyAI Logo" className="w-[18px] h-[18px] object-contain filter drop-shadow-[0_0_4px_rgba(56,189,248,0.5)]" /> Stay-On-Site Portal
               </h2>
               <p className="text-xs text-slate-400">Open authentic NCERT textbooks and syllabus models right inside your StudyAI workspace</p>
             </div>
