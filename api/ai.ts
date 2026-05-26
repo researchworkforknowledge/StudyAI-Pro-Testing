@@ -1,9 +1,18 @@
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { Agent, setGlobalDispatcher } from "undici";
 
 dotenv.config();
 
-export const maxDuration = 60; // Max timeout for Vercel Hobby plan
+// Configure undici client timeout to prevent HeadersTimeoutError (5 minutes)
+const globalAgent = new Agent({
+  headersTimeout: 300000, // 5 minutes (300,000 ms)
+  bodyTimeout: 300000,
+  connectTimeout: 60000,
+});
+setGlobalDispatcher(globalAgent);
+
+export const maxDuration = 120; // Extended timeout
 export const dynamic = 'force-dynamic';
 
 export default async function handler(req: any, res: any) {

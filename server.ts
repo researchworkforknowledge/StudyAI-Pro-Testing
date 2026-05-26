@@ -3,9 +3,18 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { Agent, setGlobalDispatcher } from "undici";
 
 // Load local environment configurations safely
 dotenv.config();
+
+// Configure undici client timeout to prevent HeadersTimeoutError (5 minutes)
+const globalAgent = new Agent({
+  headersTimeout: 300000, // 5 minutes (300,000 ms)
+  bodyTimeout: 300000,
+  connectTimeout: 60000,
+});
+setGlobalDispatcher(globalAgent);
 
 async function startServer() {
   const app = express();
