@@ -283,6 +283,19 @@ function App() {
         triggerToast("Logging in with Google Account...");
         try {
           const syncedState = await fetchStateFromFirestore(currentUser.uid);
+          
+          let updatedState = { ...syncedState };
+
+          // Run rigorous streak and points engine synchronously
+          const { hydrateUserProfile, validateAndUpdateStreak } = await import("./lib/telemetryHandlers");
+          const unifiedProfile = await hydrateUserProfile(currentUser);
+          const streakRules = await validateAndUpdateStreak(currentUser.uid, unifiedProfile);
+          
+          if (streakRules) {
+             Object.assign(unifiedProfile, streakRules);
+             triggerToast(`🔥 Streak continued! Day ${unifiedProfile.streakCount}`);
+          }
+          
           if (syncedState) {
             setState((prev) => ({
               ...prev,
@@ -294,7 +307,15 @@ function App() {
               hw: syncedState.hw || prev.hw,
               fc: syncedState.fc || prev.fc,
               qt: syncedState.qt || prev.qt,
-              stats: { ...prev.stats, ...syncedState.stats }
+              examDate: unifiedProfile.targetExamDate || syncedState.targetExamDate || prev.examDate,
+              extraXP: unifiedProfile.totalPoints || prev.extraXP,
+              stats: { 
+                ...prev.stats, 
+                ...syncedState.stats,
+                hours: unifiedProfile.studyHours || syncedState.stats?.hours || 0,
+                quizzes: unifiedProfile.quizzesDone || syncedState.stats?.quizzes || 0,
+                streak: unifiedProfile.streakCount || syncedState.stats?.streak || 0,
+              }
             }));
             triggerToast("☁️ Progress synced across devices successfully!");
           } else {
@@ -619,6 +640,21 @@ function App() {
       QuantumSynth.stop();
     };
   }, []);
+
+  const lastSessionCountRef = useRef(state.timer.sessToday);
+  
+  useEffect(() => {
+    if (state.timer.sessToday > lastSessionCountRef.current) {
+      const difference = state.timer.sessToday - lastSessionCountRef.current;
+      lastSessionCountRef.current = state.timer.sessToday;
+      
+      if (user && !isDummyConfig) {
+        import("./lib/telemetryHandlers").then(({ recordTelemetryActivity }) => {
+           recordTelemetryActivity(user.uid, { hours: difference * 0.4 });
+        });
+      }
+    }
+  }, [state.timer.sessToday, user]);
 
   // Pomodoro timer countdown tick effect interval
   useEffect(() => {
@@ -1121,9 +1157,15 @@ Content:\n${noteContent}`;
             {activeTab === "quiz" && (
               <QuizPanel
                 onCallAI={handleCallAI}
-                onIncrementQuizzes={() =>
-                  setState((prev) => ({ ...prev, stats: { ...prev.stats, quizzes: prev.stats.quizzes + 1 } }))
-                }
+                onIncrementQuizzes={async (score, total) => {
+                  setState((prev) => ({ ...prev, stats: { ...prev.stats, quizzes: prev.stats.quizzes + 1 } }));
+                  
+                  if (user && !isDummyConfig) {
+                    const { recordSubjectQuizResult, hydrateUserProfile } = await import("./lib/telemetryHandlers");
+                    const profile = await hydrateUserProfile(user);
+                    await recordSubjectQuizResult(user.uid, state.sub, score, total, profile);
+                  }
+                }}
                 onPlaySound={playDopamineSound}
                 profileName={studentDisplayName}
               />
@@ -1143,6 +1185,12 @@ Content:\n${noteContent}`;
                 }
                 onSetFCIndex={(idx) => setState((prev) => ({ ...prev, fcIdx: idx }))}
                 onCallAI={handleCallAI}
+                onReviewFC={async () => {
+                   if (user && !isDummyConfig) {
+                      const { recordTelemetryActivity } = await import("./lib/telemetryHandlers");
+                      await recordTelemetryActivity(user.uid, { flashcards: 1 });
+                   }
+                }}
               />
             )}
 

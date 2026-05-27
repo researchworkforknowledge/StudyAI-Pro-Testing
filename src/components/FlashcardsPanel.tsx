@@ -9,6 +9,7 @@ interface FlashcardsPanelProps {
   onShuffleFC: () => void;
   onSetFCIndex: (idx: number) => void;
   onCallAI: (prompt: string, persona: string) => Promise<string | null>;
+  onReviewFC?: () => void;
 }
 
 export default function FlashcardsPanel({
@@ -17,11 +18,15 @@ export default function FlashcardsPanel({
   onDeleteFC,
   onShuffleFC,
   onSetFCIndex,
-  onCallAI
+  onCallAI,
+  onReviewFC
 }: FlashcardsPanelProps) {
   const [frontText, setFrontText] = useState("");
   const [backText, setBackText] = useState("");
   const [flipped, setFlipped] = useState(false);
+
+  // Gamification tracking to avoid spamming XP on flips
+  const [reviewedCards, setReviewedCards] = useState<Set<number>>(new Set());
 
   // AI Flashcards state
   const [aiTopic, setAiTopic] = useState("");
@@ -111,6 +116,14 @@ export default function FlashcardsPanel({
 
   const currentCard: Flashcard | undefined = state.fc[state.fcIdx];
 
+  const handleFlipCard = () => {
+    setFlipped(!flipped);
+    if (!flipped && !reviewedCards.has(state.fcIdx)) {
+      setReviewedCards((prev) => new Set(prev).add(state.fcIdx));
+      if (onReviewFC) onReviewFC();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -135,7 +148,7 @@ export default function FlashcardsPanel({
         <div className="flex flex-col items-center space-y-6">
           {/* 3D Card Stage wrapper */}
           <div
-            onClick={() => setFlipped(!flipped)}
+            onClick={handleFlipCard}
             className="w-full max-w-lg h-60 md:h-64 cursor-pointer relative select-none [perspective:1200px]"
           >
             {/* Flippable card item */}

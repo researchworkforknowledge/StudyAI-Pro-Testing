@@ -98,15 +98,38 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 }
 
 /**
- * Sync AppState to Firestore under user document
+ * Advanced Sync for Gamification and Telemetry
+ */
+export async function syncAdvancedTelemetry(userId: string, data: any) {
+  if (isDummyConfig || !db) return;
+  const pathStr = `users/${userId}`;
+  try {
+    const docRef = doc(db, "users", userId);
+    
+    // Attempt to merge fields rather than purely overwrite
+    await setDoc(docRef, {
+      ...data,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+    
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, pathStr);
+  }
+}
+
+/**
+ * Sync AppState to Firestore under user document (Extended to map to new schema)
  */
 export async function syncStateToFirestore(userId: string, state: any) {
   if (isDummyConfig || !db) return;
   const pathStr = `users/${userId}`;
   try {
     const payload = {
-      userId,
+      uid: userId,
       email: auth?.currentUser?.email || "",
+      name: auth?.currentUser?.displayName || state.profileName || "",
+      photoURL: auth?.currentUser?.photoURL || "",
+      
       board: state.board,
       cls: state.cls,
       sub: state.sub,
@@ -115,10 +138,24 @@ export async function syncStateToFirestore(userId: string, state: any) {
       hw: state.hw || [],
       fc: state.fc || [],
       qt: state.qt || [],
+      
+      // Core telemetry schema mappings
+      targetExamDate: state.examDate || null,
+      studyHours: state.stats?.hours || 0,
+      quizzesDone: state.stats?.quizzes || 0,
+      flashcardsCompleted: state.stats?.hwDone || 0, // Using hwDone for legacy flashcard support if needed
+      streakCount: state.stats?.streak || 0,
+      lastActiveDate: state.lastDate || new Date().toISOString().split("T")[0],
+      totalPoints: state.extraXP || 0,
+
+      // App legacy stats
       stats: state.stats || {},
-      lastUpdated: new Date().toISOString()
+      
+      updatedAt: new Date().toISOString()
     };
-    await setDoc(doc(db, "users", userId), payload);
+    
+    // Try to create original default if it doesn't exist
+    await setDoc(doc(db, "users", userId), payload, { merge: true });
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, pathStr);
   }

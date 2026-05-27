@@ -3,7 +3,7 @@ import { HelpCircle, RefreshCw, Sparkles, Award, ArrowRight, CheckCircle2, XCirc
 
 interface QuizPanelProps {
   onCallAI: (prompt: string, persona: string) => Promise<string | null>;
-  onIncrementQuizzes: () => void;
+  onIncrementQuizzes: (score: number, total: number) => void;
   onPlaySound?: (soundType: 'success' | 'levelUp' | 'correct' | 'wrong' | 'click' | 'powerUp') => void;
   profileName?: string;
 }
@@ -96,7 +96,7 @@ export default function QuizPanel({ onCallAI, onIncrementQuizzes, onPlaySound, p
       if (onPlaySound) onPlaySound('click');
     } else {
       setQuizFinished(true);
-      onIncrementQuizzes();
+      onIncrementQuizzes(score, questions.length);
       if (onPlaySound) {
         onPlaySound(score >= questions.length / 2 ? 'levelUp' : 'wrong');
       }

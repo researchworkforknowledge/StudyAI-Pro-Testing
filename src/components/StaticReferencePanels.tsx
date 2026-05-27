@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useCloudProfile } from "../hooks/useCloudProfile";
 import {
   Sigma,
   Copy,
@@ -205,8 +206,45 @@ export default function StaticReferencePanels({
     setAiYogaLoading(false);
   };
 
+  const { profile } = useCloudProfile();
+
   // Dynamic calculated subject proficiency metrics for the Recharts Radar Chart
   const subjectProficiencyData = useMemo(() => {
+    if (profile && profile.subjectPerformanceIndex) {
+      // Use live firebase datastore mapped correctly
+      return [
+        { 
+          subject: "Physics", 
+          fullName: "Physics", 
+          Proficiency: Math.max(10, profile.subjectPerformanceIndex.physics?.weightedScore || 45), 
+          Target: Math.min(100, Math.max(10, profile.subjectPerformanceIndex.physics?.weightedScore || 45) + 15), 
+          fullMark: 100 
+        },
+        { 
+          subject: "Chemistry", 
+          fullName: "Chemistry", 
+          Proficiency: Math.max(10, profile.subjectPerformanceIndex.chemistry?.weightedScore || 50), 
+          Target: Math.min(100, Math.max(10, profile.subjectPerformanceIndex.chemistry?.weightedScore || 50) + 15), 
+          fullMark: 100 
+        },
+        { 
+          subject: "Maths", 
+          fullName: "Mathematics", 
+          Proficiency: Math.max(10, profile.subjectPerformanceIndex.mathematics?.weightedScore || 60), 
+          Target: Math.min(100, Math.max(10, profile.subjectPerformanceIndex.mathematics?.weightedScore || 60) + 15), 
+          fullMark: 100 
+        },
+        { 
+          subject: "Biology", 
+          fullName: "Biology", 
+          Proficiency: Math.max(10, profile.subjectPerformanceIndex.biology?.weightedScore || 55), 
+          Target: Math.min(100, Math.max(10, profile.subjectPerformanceIndex.biology?.weightedScore || 55) + 15), 
+          fullMark: 100 
+        }
+      ];
+    }
+    
+    // Legacy fallback
     const quizzes = state.stats.quizzes || 0;
     const streak = state.stats.streak || 0;
     const hours = state.stats.hours || 0;
@@ -215,9 +253,7 @@ export default function StaticReferencePanels({
       { name: "Maths", label: "Mathematics", base: 64, multiplier: 3.5 },
       { name: "Physics", label: "Physics", base: 60, multiplier: 3.0 },
       { name: "Chemistry", label: "Chemistry", base: 68, multiplier: 3.0 },
-      { name: "Biology", label: "Biology", base: 55, multiplier: 2.5 },
-      { name: "Social Sci", label: "History & Civics", base: 72, multiplier: 2.0 },
-      { name: "English", label: "English / Verbal", base: 80, multiplier: 1.5 }
+      { name: "Biology", label: "Biology", base: 55, multiplier: 2.5 }
     ];
 
     return baselineSubjects.map((sub) => {
@@ -248,7 +284,7 @@ export default function StaticReferencePanels({
         fullMark: 100
       };
     });
-  }, [state.stats.quizzes, state.stats.streak, state.stats.hours, state.sub]);
+  }, [state.stats.quizzes, state.stats.streak, state.stats.hours, state.sub, profile]);
 
   const handleGenRecovery = async () => {
     setRecoveryLoading(true);
